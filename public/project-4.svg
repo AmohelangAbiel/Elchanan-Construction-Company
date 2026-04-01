@@ -1,10 +1,12 @@
-<svg viewBox="0 0 720 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Paving and brickwork illustration">
-  <rect width="720" height="480" fill="#09101A"/>
-  <path d="M100 320H620V420H100z" fill="#0F7ACB"/>
-  <path d="M140 240H580V320H140z" fill="#5DC2F2"/>
-  <path d="M240 180H340V240H240z" fill="#22D9FF"/>
-  <path d="M420 200H520V240H420z" fill="#0F7ACB"/>
-  <path d="M120 360H320" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round"/>
-  <path d="M420 360H620" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round"/>
-  <circle cx="580" cy="110" r="45" fill="#22D9FF" opacity="0.14"/>
+<svg viewBox="0 0 1440 960" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Brickwork and paving photograph">
+  <defs>
+    <linearGradient id="overlay" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#04101C" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#04101C" stop-opacity="0.68" />
+    </linearGradient>
+  </defs>
+  <image href="/images/construction/brickwork-site.jpg" width="1440" height="960" preserveAspectRatio="xMidYMid slice" />
+  <rect width="1440" height="960" fill="url(#overlay)" />
+  <rect x="68" y="68" width="384" height="88" rx="44" fill="#04101C" fill-opacity="0.72" />
+  <text x="112" y="124" fill="#22D9FF" font-family="Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="6">MATERIAL VISUAL</text>
 </svg>

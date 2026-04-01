@@ -1,39 +1,41 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, Building2 } from 'lucide-react';
+import { CardImage } from './media/CardImage';
 
 type ProjectCardProps = {
   title: string;
   category: string;
   description: string;
   image: string;
+  imageAlt?: string;
   slug?: string;
 };
 
-export function ProjectCard({ title, category, description, image, slug }: ProjectCardProps) {
-  const isLocalImage = image.startsWith('/');
-
+export function ProjectCard({ title, category, description, image, imageAlt, slug }: ProjectCardProps) {
   const content = (
     <>
-      <div className="relative h-56 overflow-hidden bg-slate-900/80">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          className="object-cover transition duration-500 group-hover:scale-[1.03]"
-          priority={false}
-          unoptimized={!isLocalImage}
-        />
-      </div>
+      <CardImage
+        src={image}
+        alt={imageAlt || title}
+        badge={category}
+        className="rounded-b-[1.5rem]"
+        sizes="(min-width: 1024px) 42vw, 100vw"
+      >
+        <div className="flex items-end justify-between gap-4">
+          <div className="max-w-[18rem]">
+            <p className="text-sm font-semibold text-white/80">Delivered project</p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">{title}</h3>
+          </div>
+          <ArrowUpRight size={18} className="shrink-0 text-brand-cyan transition duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </div>
+      </CardImage>
       <div className="space-y-3 p-6">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.25em] text-brand-sky">
             <Building2 size={14} />
             {category}
           </p>
-          <ArrowUpRight size={16} className="text-brand-cyan transition duration-200 group-hover:translate-x-0.5" />
         </div>
-        <h3 className="text-2xl font-semibold text-white">{title}</h3>
         <p className="text-sm leading-7 text-slate-300">{description}</p>
       </div>
     </>
@@ -43,7 +45,7 @@ export function ProjectCard({ title, category, description, image, slug }: Proje
     return (
       <Link
         href={`/projects/${slug}`}
-        className="interactive-card group block overflow-hidden"
+        className="interactive-card photo-card group block overflow-hidden"
       >
         {content}
       </Link>
@@ -51,7 +53,7 @@ export function ProjectCard({ title, category, description, image, slug }: Proje
   }
 
   return (
-    <article className="interactive-card group overflow-hidden">
+    <article className="interactive-card photo-card group overflow-hidden">
       {content}
     </article>
   );

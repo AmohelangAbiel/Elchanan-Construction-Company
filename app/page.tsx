@@ -1,5 +1,4 @@
-﻿import Link from 'next/link';
-import { ProjectCard } from './components/ProjectCard';
+import Link from 'next/link';
 import {
   ArrowRight,
   CheckCircle2,
@@ -9,10 +8,15 @@ import {
   TimerReset,
   Wrench,
 } from 'lucide-react';
+import { ProjectCard } from './components/ProjectCard';
+import { Reveal } from './components/Reveal';
 import { SectionHeading } from './components/SectionHeading';
 import { ServiceCard } from './components/ServiceCard';
 import { TestimonialCard } from './components/TestimonialCard';
 import { WhatsAppCTA } from './components/WhatsAppCTA';
+import { BannerImage } from './components/media/BannerImage';
+import { HeroImage } from './components/media/HeroImage';
+import { SectionBackground } from './components/media/SectionBackground';
 import {
   getApprovedReviews,
   getCompanyProfile,
@@ -22,6 +26,7 @@ import {
 } from '../lib/content';
 import { getDisplayPhone, toTelHref } from '../lib/contact';
 import { createPageMetadata } from '../lib/seo';
+import { resolveProjectImageSet, sectionVisuals } from '../lib/site-visuals';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +51,7 @@ export default async function HomePage() {
     { label: 'Featured projects', value: `${projects.length}` },
     { label: 'Approved reviews', value: `${reviews.length}` },
   ];
+
   const trustSignals = [
     { icon: CheckCircle2, text: 'Tailored quotations with practical scope clarity' },
     { icon: TimerReset, text: 'Reliable timeline communication from kickoff to handover' },
@@ -54,16 +60,15 @@ export default async function HomePage() {
 
   return (
     <main className="relative overflow-hidden">
-      <section className="relative overflow-hidden px-4 py-24 sm:px-6 lg:px-8">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-hero-glow opacity-80" />
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <div className="max-w-2xl">
+      <HeroImage image={sectionVisuals.hero}>
+        <div className="grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <Reveal className="max-w-2xl">
+            <div>
               <p className="mb-4 inline-flex rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">
                 Modern construction in Rustenburg
               </p>
               <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Build with confidence. Renovate with clarity. Quote with certainty.
+                Build with confidence. Deliver with real-world construction clarity.
               </h1>
               <p className="mt-8 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
                 {profile?.description ||
@@ -80,13 +85,19 @@ export default async function HomePage() {
                 </Link>
               </div>
               <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-300">
-                <Link href={toTelHref(profile?.phone)} className="contact-action-card inline-flex items-center gap-3 rounded-2xl px-4 py-2 text-white">
+                <Link
+                  href={toTelHref(profile?.phone)}
+                  className="contact-action-card inline-flex items-center gap-3 rounded-2xl px-4 py-2 text-white"
+                >
                   <span className="icon-pill">
                     <PhoneCall size={16} />
                   </span>
                   <span>Call {getDisplayPhone(profile?.phone)}</span>
                 </Link>
-                <Link href={`mailto:${profile?.email || 'hello@elchananconstruction.co.za'}`} className="contact-action-card inline-flex items-center gap-3 rounded-2xl px-4 py-2 text-white">
+                <Link
+                  href={`mailto:${profile?.email || 'hello@elchananconstruction.co.za'}`}
+                  className="contact-action-card inline-flex items-center gap-3 rounded-2xl px-4 py-2 text-white"
+                >
                   <span className="icon-pill">
                     <Mail size={16} />
                   </span>
@@ -95,41 +106,51 @@ export default async function HomePage() {
               </div>
               <div className="mt-12 grid gap-4 sm:grid-cols-3">
                 {stats.map((item) => (
-                  <div key={item.label} className="interactive-card p-5 text-center">
+                  <div key={item.label} className="interactive-card photo-card p-5 text-center">
                     <p className="text-3xl font-semibold text-white">{item.value}</p>
                     <p className="mt-2 text-sm text-slate-400">{item.label}</p>
                   </div>
                 ))}
               </div>
             </div>
+          </Reveal>
 
-            <div className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-8 shadow-glow backdrop-blur-xl sm:p-12">
-              <div className="space-y-6">
-                <div className="rounded-3xl bg-slate-900/85 p-6 text-slate-200">
+          <Reveal delayMs={120} className="photo-card rounded-[2rem] border border-white/10 bg-slate-950/70 p-8 shadow-glow backdrop-blur-xl sm:p-12">
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6 text-slate-200">
                   <p className="text-sm uppercase tracking-[0.3em] text-brand-cyan">Trusted by local clients</p>
-                  <p className="mt-4 text-3xl font-semibold text-white">Fast quote response. Practical timelines. Professional communication.</p>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-3xl border border-slate-800/70 bg-slate-900/80 p-5">
-                    <p className="text-sm text-slate-400">Residential and renovation builds</p>
-                    <p className="mt-3 text-xl font-semibold text-white">Tailored construction delivery</p>
-                  </div>
-                  <div className="rounded-3xl border border-slate-800/70 bg-slate-900/80 p-5">
-                    <p className="text-sm text-slate-400">Commercial and infrastructure support</p>
-                    <p className="mt-3 text-xl font-semibold text-white">Reliable site execution</p>
-                  </div>
+                  <p className="mt-4 text-3xl font-semibold text-white">
+                    Site-ready planning. Cleaner execution. Better handover quality.
+                  </p>
                 </div>
                 <div className="rounded-3xl border border-brand-cyan/30 bg-brand-cyan/10 p-6">
-                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">Service area confidence</p>
-                  <p className="mt-3 text-slate-100">
-                    Based in Rustenburg and serving surrounding areas with dependable construction, renovation, and fitout support.
+                  <p className="text-sm uppercase tracking-[0.3em] text-brand-cyan">Built for speed</p>
+                  <p className="mt-4 text-slate-100">
+                    Residential, renovation, commercial, and infrastructure scopes coordinated with practical field discipline.
                   </p>
                 </div>
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-3xl border border-slate-800/70 bg-slate-900/80 p-5">
+                  <p className="text-sm text-slate-400">Residential and renovation builds</p>
+                  <p className="mt-3 text-xl font-semibold text-white">Tailored construction delivery</p>
+                </div>
+                <div className="rounded-3xl border border-slate-800/70 bg-slate-900/80 p-5">
+                  <p className="text-sm text-slate-400">Commercial and infrastructure support</p>
+                  <p className="mt-3 text-xl font-semibold text-white">Reliable site execution</p>
+                </div>
+              </div>
+              <div className="rounded-3xl border border-brand-cyan/30 bg-brand-cyan/10 p-6">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">Service area confidence</p>
+                <p className="mt-3 text-slate-100">
+                  Based in Rustenburg and serving surrounding areas with dependable construction, renovation, and fitout support.
+                </p>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
-      </section>
+      </HeroImage>
 
       <section className="border-t border-white/10 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl rounded-[2rem] border border-slate-800/80 bg-slate-950/70 p-6 shadow-glow">
@@ -151,44 +172,66 @@ export default async function HomePage() {
 
       <section className="border-t border-white/10 px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <SectionHeading
-            title="Services built for every stage of your project"
-            subtitle="What we do"
-            description="A full-service construction partner for residential, renovation, hardscape, and project management delivery."
-          />
-          <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {services.slice(0, 6).map((service) => (
-              <ServiceCard
-                key={service.id}
-                title={service.title}
-                summary={service.summary}
-                details={service.details}
-                slug={service.slug}
-                icon={service.title.slice(0, 2).toUpperCase()}
-              />
-            ))}
-          </div>
+          <Reveal>
+            <SectionBackground image={sectionVisuals.services} contentClassName="px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">What we do</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  Services built for every stage of your project
+                </h2>
+                <p className="mt-4 text-base leading-8 text-slate-200">
+                  A full-service construction partner for residential builds, renovations, hardscape delivery, and trusted site execution.
+                </p>
+              </div>
+              <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {services.slice(0, 6).map((service, index) => (
+                  <Reveal key={service.id} delayMs={index * 70}>
+                    <ServiceCard
+                      title={service.title}
+                      summary={service.summary}
+                      details={service.details}
+                      image={service.image}
+                      slug={service.slug}
+                      icon={service.title.slice(0, 2).toUpperCase()}
+                    />
+                  </Reveal>
+                ))}
+              </div>
+            </SectionBackground>
+          </Reveal>
         </div>
       </section>
 
       <section className="border-t border-white/10 px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <SectionHeading
-            title="A portfolio of trusted construction projects"
-            subtitle="Featured work"
-            description="Our project showcase highlights build quality, timeline discipline, and dependable finishing standards."
-          />
+          <Reveal>
+            <BannerImage
+              image={sectionVisuals.projects}
+              eyebrow="Featured work"
+              title="A portfolio of trusted construction projects"
+              description="Our project showcase highlights build quality, timeline discipline, and dependable finishing standards with photographic detail that now feels grounded in real delivery."
+              ctaHref="/projects"
+              ctaLabel="View projects"
+              secondaryHref="/quote"
+              secondaryLabel="Request a quote"
+            />
+          </Reveal>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            {projects.slice(0, 4).map((project) => (
-              <ProjectCard
-                key={project.id}
-                title={project.title}
-                category={project.category}
-                description={project.summary}
-                image={project.image}
-                slug={project.slug}
-              />
-            ))}
+            {projects.slice(0, 4).map((project, index) => {
+              const visuals = resolveProjectImageSet(project);
+              return (
+                <Reveal key={project.id} delayMs={index * 90}>
+                  <ProjectCard
+                    title={project.title}
+                    category={project.category}
+                    description={project.summary}
+                    image={visuals.cover.src}
+                    imageAlt={visuals.cover.alt}
+                    slug={project.slug}
+                  />
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -203,7 +246,7 @@ export default async function HomePage() {
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {pricingPlans.slice(0, 3).map((plan) => (
-              <div key={plan.id} className="interactive-card p-6">
+              <div key={plan.id} className="interactive-card photo-card p-6">
                 <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-brand-cyan">
                   <Wrench size={14} />
                   {plan.title}
@@ -218,53 +261,63 @@ export default async function HomePage() {
 
       <section className="border-t border-white/10 px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <SectionHeading
-            title="Client feedback from approved project reviews"
-            subtitle="Testimonials"
-            description="Public testimonials are displayed only after moderation and quality checks."
-          />
-          <div className="mt-12 grid gap-6 xl:grid-cols-3">
-            {reviews.slice(0, 6).map((review) => (
-              <TestimonialCard
-                key={review.id}
-                name={review.name}
-                role={review.projectContext || 'Construction client'}
-                quote={review.message}
-                rating={review.rating}
-              />
-            ))}
-          </div>
+          <Reveal>
+            <SectionBackground image={sectionVisuals.testimonials} contentClassName="px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">Testimonials</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  Client feedback from approved project reviews
+                </h2>
+                <p className="mt-4 text-base leading-8 text-slate-200">
+                  Public testimonials are displayed only after moderation and quality checks, now presented with visuals that match the premium construction brand.
+                </p>
+              </div>
+              <div className="mt-12 grid gap-6 xl:grid-cols-3">
+                {reviews.slice(0, 6).map((review, index) => (
+                  <Reveal key={review.id} delayMs={index * 70}>
+                    <TestimonialCard
+                      name={review.name}
+                      role={review.projectContext || 'Construction client'}
+                      quote={review.message}
+                      rating={review.rating}
+                    />
+                  </Reveal>
+                ))}
+              </div>
+            </SectionBackground>
+          </Reveal>
         </div>
       </section>
 
       <section className="border-t border-white/10 px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-[2rem] border border-brand-cyan/30 bg-slate-900/90 p-10 text-center shadow-glow">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">Ready to start?</p>
-            <h2 className="mt-4 text-4xl font-semibold text-white sm:text-5xl">Get a tailored quotation and clear next steps.</h2>
-            <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-slate-300">
-              We combine quality workmanship, reliable timelines, and proactive communication for residential and commercial clients.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/quote" className="btn-accent px-8">
-                Request a quote
-                <ArrowRight size={16} />
-              </Link>
-              <Link href="/contact" className="btn-ghost px-8">
-                Contact our team
-                <ArrowRight size={16} />
-              </Link>
-              <WhatsAppCTA
-                phone={profile?.whatsapp}
-                label="WhatsApp us"
-                message="Hello, I need a tailored construction quote."
-                className="interactive-button border border-brand-cyan/40 bg-brand-cyan/10 px-8 text-sm font-semibold text-brand-cyan hover:bg-brand-cyan/20"
-              />
-            </div>
-          </div>
+          <Reveal>
+            <SectionBackground image={sectionVisuals.cta} contentClassName="px-6 py-10 text-center sm:px-10 sm:py-14">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">Ready to start?</p>
+              <h2 className="mt-4 text-4xl font-semibold text-white sm:text-5xl">Get a tailored quotation and clear next steps.</h2>
+              <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-slate-200">
+                We combine quality workmanship, reliable timelines, and proactive communication for residential and commercial clients.
+              </p>
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link href="/quote" className="btn-accent px-8">
+                  Request a quote
+                  <ArrowRight size={16} />
+                </Link>
+                <Link href="/contact" className="btn-ghost px-8">
+                  Contact our team
+                  <ArrowRight size={16} />
+                </Link>
+                <WhatsAppCTA
+                  phone={profile?.whatsapp}
+                  label="WhatsApp us"
+                  message="Hello, I need a tailored construction quote."
+                  className="interactive-button border border-brand-cyan/40 bg-brand-cyan/10 px-8 text-sm font-semibold text-brand-cyan hover:bg-brand-cyan/20"
+                />
+              </div>
+            </SectionBackground>
+          </Reveal>
         </div>
       </section>
     </main>
   );
 }
-

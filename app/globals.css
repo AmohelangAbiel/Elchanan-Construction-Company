@@ -7,17 +7,17 @@
   --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --brand-primary: #0080c0;
-  --brand-secondary: #30b0e0;
+  --brand-primary: #098ec7;
+  --brand-secondary: #3dbbed;
   --brand-cyan: #22d9ff;
-  --brand-graphite: #64676b;
-  --brand-slate: #93979c;
-  --brand-cloud: #f0f2f3;
+  --brand-graphite: #666666;
+  --brand-slate: #97989a;
+  --brand-cloud: #f3f6f8;
 
-  --surface-base: #030b17;
-  --surface-panel: #101a2a;
-  --surface-soft: #1a2534;
-  --surface-glass: rgba(16, 26, 42, 0.74);
+  --surface-base: #04101c;
+  --surface-panel: #0d1926;
+  --surface-soft: #1a2634;
+  --surface-glass: rgba(13, 25, 38, 0.74);
 
   --text-strong: #f7fafc;
   --text-muted: #9caec2;
@@ -38,7 +38,10 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--surface-base);
+  background:
+    radial-gradient(circle at top left, rgba(61, 187, 237, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(102, 102, 102, 0.14), transparent 18%),
+    linear-gradient(180deg, #04101c 0%, #081522 52%, #030b14 100%);
   color: var(--text-strong);
   font-family: var(--font-body);
 }
@@ -112,6 +115,11 @@ select:focus-visible {
     box-shadow: 0 0 0 2px rgba(34, 217, 255, 0.26), 0 16px 42px rgba(0, 0, 0, 0.34);
   }
 
+  .photo-card {
+    @apply overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/65 backdrop-blur-sm;
+    box-shadow: 0 22px 52px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(34, 217, 255, 0.08);
+  }
+
   .contact-action-card {
     @apply relative overflow-hidden rounded-2xl border border-slate-800/75 bg-slate-900/70 p-4 transition duration-200 ease-out;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
@@ -176,6 +184,30 @@ select:focus-visible {
   }
 }
 
+.reveal-up {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 700ms ease,
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes heroFloat {
+  0%,
+  100% {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: scale(1.07) translate3d(0, -1.25%, 0);
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .interactive-card:hover {
     @apply -translate-y-0.5 border-brand-cyan/45 bg-slate-900/90;
@@ -198,6 +230,10 @@ select:focus-visible {
   .interactive-input:hover {
     @apply border-brand-sky/45;
   }
+
+  .photo-card:hover {
+    box-shadow: 0 26px 62px rgba(9, 142, 199, 0.2), 0 0 0 1px rgba(34, 217, 255, 0.16);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -213,6 +249,12 @@ select:focus-visible {
   .interactive-card:hover,
   .contact-action-card:hover,
   .interactive-button:hover {
+    transform: none !important;
+  }
+
+  .reveal-up,
+  .reveal-up.is-visible {
+    opacity: 1 !important;
     transform: none !important;
   }
 }

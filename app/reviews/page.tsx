@@ -1,8 +1,11 @@
-import { SectionHeading } from '../components/SectionHeading';
-import { TestimonialCard } from '../components/TestimonialCard';
+import { Reveal } from '../components/Reveal';
 import { ReviewSubmissionForm } from '../components/ReviewSubmissionForm';
+import { TestimonialCard } from '../components/TestimonialCard';
+import { BannerImage } from '../components/media/BannerImage';
+import { SectionBackground } from '../components/media/SectionBackground';
 import { getApprovedReviews } from '../../lib/content';
 import { createPageMetadata } from '../../lib/seo';
+import { sectionVisuals } from '../../lib/site-visuals';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,25 +21,29 @@ export default async function ReviewsPage() {
 
   return (
     <main className="px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <SectionHeading
-          title="Reviews from clients who trust our delivery"
-          subtitle="Reviews"
-          description="Only approved testimonials are displayed publicly. Every submission is moderated before publication."
-        />
+      <div className="mx-auto max-w-7xl space-y-14">
+        <Reveal>
+          <BannerImage
+            image={sectionVisuals.reviews}
+            eyebrow="Reviews"
+            title="Reviews from clients who trust our delivery"
+            description="Only approved testimonials are displayed publicly. Every submission is moderated before publication."
+          />
+        </Reveal>
 
-        <div className="mt-14 grid gap-10 lg:grid-cols-[0.95fr_0.85fr]">
+        <div className="grid gap-10 lg:grid-cols-[0.95fr_0.85fr]">
           <div className="space-y-6">
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {reviews.length ? (
-                reviews.map((review) => (
-                  <TestimonialCard
-                    key={review.id}
-                    name={review.name}
-                    role={review.projectContext || 'Construction client'}
-                    quote={review.message}
-                    rating={review.rating}
-                  />
+                reviews.map((review, index) => (
+                  <Reveal key={review.id} delayMs={index * 60}>
+                    <TestimonialCard
+                      name={review.name}
+                      role={review.projectContext || 'Construction client'}
+                      quote={review.message}
+                      rating={review.rating}
+                    />
+                  </Reveal>
                 ))
               ) : (
                 <div className="rounded-[2rem] border border-slate-800/70 bg-slate-950/70 p-10 text-slate-300 shadow-glow">
@@ -47,16 +54,22 @@ export default async function ReviewsPage() {
             </div>
           </div>
 
-          <aside className="rounded-[2rem] border border-slate-800/70 bg-slate-950/70 p-10 shadow-glow">
-            <div className="space-y-6">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-sky">Share your feedback</p>
-                <p className="mt-4 text-slate-300">Submit your review. Our moderation team approves valid testimonials for public display.</p>
-              </div>
-              <div className="mt-6">
-                <ReviewSubmissionForm />
-              </div>
-            </div>
+          <aside>
+            <Reveal>
+              <SectionBackground image={sectionVisuals.testimonials} contentClassName="px-8 py-10">
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-cyan">Share your feedback</p>
+                    <p className="mt-4 text-slate-100">
+                      Submit your review. Our moderation team approves valid testimonials for public display.
+                    </p>
+                  </div>
+                  <div className="mt-6">
+                    <ReviewSubmissionForm />
+                  </div>
+                </div>
+              </SectionBackground>
+            </Reveal>
           </aside>
         </div>
       </div>
