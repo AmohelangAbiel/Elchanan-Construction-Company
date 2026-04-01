@@ -12,6 +12,8 @@ const portalNav = [
   { href: '/portal', label: 'Dashboard' },
   { href: '/portal/quotes', label: 'Quotes' },
   { href: '/portal/projects', label: 'Projects' },
+  { href: '/portal/invoices', label: 'Invoices' },
+  { href: '/portal/contracts', label: 'Contracts' },
   { href: '/portal/documents', label: 'Documents' },
   { href: '/portal/profile', label: 'Profile' },
 ];

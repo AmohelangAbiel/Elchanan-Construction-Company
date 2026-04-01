@@ -6,6 +6,7 @@ import { BUDGET_RANGES, SERVICE_TYPES } from '../../../lib/constants';
 import { OPERATIONS_ROLES } from '../../../lib/permissions';
 import { AdminTopNav } from '../components/AdminTopNav';
 import { AdminFlash } from '../components/AdminFlash';
+import { deriveQuoteApprovalStatus } from '../../../lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -230,6 +231,13 @@ export default async function AdminQuotesPage({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-slate-800/70 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-300">{quote.status}</span>
+                  <span className="rounded-full border border-brand-cyan/35 bg-brand-cyan/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-brand-cyan">
+                    {deriveQuoteApprovalStatus({
+                      approvalStatus: quote.approvalStatus,
+                      quoteSentAt: quote.quoteSentAt,
+                      validityDays: quote.validityDays,
+                    }).replace('_', ' ')}
+                  </span>
                   {quote.assignedToAdmin ? (
                     <span className="rounded-full border border-brand-cyan/40 bg-brand-cyan/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-brand-cyan">
                       {quote.assignedToAdmin.name}

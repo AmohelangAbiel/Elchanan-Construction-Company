@@ -1,5 +1,6 @@
 import type { Lead, LeadSourceType, LeadStatus, Prisma, QuoteStatus } from '@prisma/client';
 import { prisma } from './prisma';
+import { createDeliveryProjectCode } from './operations';
 import { normalizeEmail, normalizePhone, sanitizeOptionalText, sanitizeText } from './sanitize';
 
 type LeadUpsertInput = {
@@ -246,7 +247,8 @@ export async function convertWonQuoteToDeliveryProject(input: {
       title:
         sanitizeOptionalText(input.title, 180) ||
         `${quote.serviceType} - ${quote.fullName}`,
-      status: 'PLANNED',
+      status: 'ACTIVE',
+      projectCode: createDeliveryProjectCode(),
       startTarget: input.startTarget || null,
       notes: sanitizeOptionalText(input.notes, 4000) || null,
       quoteRequestId: quote.id,

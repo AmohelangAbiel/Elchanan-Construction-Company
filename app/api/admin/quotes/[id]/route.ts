@@ -60,12 +60,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const existing = await prisma.quoteRequest.findFirst({
     where: { id: params.id, deletedAt: null },
-    select: {
-      id: true,
-      status: true,
-      assignedToAdminId: true,
-      leadId: true,
-      quoteSentAt: true,
+      select: {
+        id: true,
+        status: true,
+        approvalStatus: true,
+        assignedToAdminId: true,
+        leadId: true,
+        quoteSentAt: true,
       convertedProject: {
         select: { id: true },
       },
@@ -109,6 +110,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
     : quoteSentNow
       ? new Date()
       : undefined;
+  const nextApprovalStatus =
+    (quoteSentAtUpdate || existing.quoteSentAt) && existing.approvalStatus === 'DRAFT'
+      ? 'SENT'
+      : existing.approvalStatus;
 
   const lastContactedAtUpdate = result.data.lastContactedAt
     ? new Date(result.data.lastContactedAt)
@@ -123,6 +128,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       followUpNotes: result.data.followUpNotes || null,
       lastContactedAt: lastContactedAtUpdate,
       quoteSentAt: quoteSentAtUpdate,
+      approvalStatus: nextApprovalStatus,
       quoteSummary: result.data.quoteSummary || null,
       scopeNotes: result.data.scopeNotes || null,
       attachmentUrl: result.data.attachmentUrl || null,
@@ -265,6 +271,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       actorAdminId: adminSession.userId,
       details: {
         status: result.data.status,
+        approvalStatus: nextApprovalStatus,
         assignedToAdminId: nextAssignedAdminId,
         quoteSentAt: quoteSentAtUpdate || existing.quoteSentAt,
         convertedProjectId,

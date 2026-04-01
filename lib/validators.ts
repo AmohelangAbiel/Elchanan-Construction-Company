@@ -1,18 +1,30 @@
 import { z } from 'zod';
 import {
+  BILLING_TYPES,
   BUDGET_RANGES,
+  DOCUMENT_APPROVAL_STATUSES,
   CONTACT_METHODS,
   DELIVERY_PROJECT_STATUSES,
+  INVOICE_STATUSES,
   LEAD_STATUSES,
   LEAD_SOURCE_TYPES,
+  MATERIAL_ITEM_STATUSES,
+  PAYMENT_METHODS,
+  PROCUREMENT_STATUSES,
   PROJECT_TYPES,
+  PROJECT_ASSIGNMENT_ROLES,
+  PORTAL_DOCUMENT_TYPES,
+  PURCHASE_REQUEST_STATUSES,
+  QUOTE_APPROVAL_STATUSES,
+  SITE_TASK_STATUSES,
   SERVICE_TYPES,
+  SUPPLIER_STATUSES,
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from './constants';
 import { normalizePhone, sanitizeOptionalText, sanitizeText, slugify } from './sanitize';
 
-const booleanish = z.union([z.boolean(), z.literal('true'), z.literal('on'), z.literal('1')]);
+const booleanish = z.union([z.boolean(), z.literal('true'), z.literal('false'), z.literal('on'), z.literal('1')]);
 
 const optionalText = (max = 255) =>
   z
@@ -31,6 +43,21 @@ const phoneText = (label: string) =>
     .string({ required_error: `${label} is required` })
     .transform((value) => normalizePhone(value))
     .refine((value) => value.replace(/\D/g, '').length >= 7, `${label} is invalid`);
+
+const optionalPhoneText = (label: string) =>
+  z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 50))
+    .transform((value) => (value ? normalizePhone(value) : undefined))
+    .refine((value) => !value || value.replace(/\D/g, '').length >= 7, `${label} is invalid`);
+
+const optionalEmailField = () =>
+  z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 320)?.toLowerCase())
+    .refine((value) => !value || z.string().email().safeParse(value).success, 'Valid email is required');
 
 const isSafeHttpOrRelativeUrl = (value: string) =>
   /^https?:\/\/[^\s]+$/i.test(value) || /^\/[^\s]*$/.test(value);
@@ -56,10 +83,45 @@ const optionalCurrencyNumber = z
   })
   .refine((value) => value === undefined || (value >= 0 && value <= 999999999), 'Invalid currency value');
 
-const adminIdField = z
+const optionalDecimalNumber = z
+  .union([z.number(), z.string()])
+  .optional()
+  .transform((value) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'string' && !value.trim()) return undefined;
+    const parsed = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(parsed)) return undefined;
+    return parsed;
+  })
+  .refine((value) => value === undefined || (value >= 0 && value <= 999999999), 'Invalid numeric value');
+
+const requiredDecimalNumber = (label: string, min = 0) =>
+  z
+    .union([z.number(), z.string()], { required_error: `${label} is required` })
+    .transform((value) => {
+      const parsed = typeof value === 'number' ? value : Number(sanitizeText(value, 60));
+      return Number.isFinite(parsed) ? parsed : NaN;
+    })
+    .refine((value) => Number.isFinite(value) && value >= min && value <= 999999999, `${label} is invalid`);
+
+const relationIdField = z
   .string()
   .optional()
   .transform((value) => sanitizeOptionalText(value, 120));
+
+const adminIdField = relationIdField;
+
+const requiredIdField = (label: string) =>
+  z
+    .string({ required_error: `${label} is required` })
+    .transform((value) => sanitizeText(value, 120))
+    .refine((value) => value.length >= 1, `${label} is required`);
+
+const requiredDateString = (label: string) =>
+  z
+    .string({ required_error: `${label} is required` })
+    .transform((value) => sanitizeText(value, 40))
+    .refine((value) => !Number.isNaN(Date.parse(value)), `${label} is required`);
 
 export const enquirySchema = z.object({
   fullName: requiredText('Full name', 2, 120),
@@ -145,11 +207,7 @@ export const quoteSchema = z.object({
 
 export const reviewSchema = z.object({
   name: requiredText('Name', 2, 120),
-  email: z
-    .string()
-    .optional()
-    .transform((value) => sanitizeOptionalText(value, 320)?.toLowerCase())
-    .refine((value) => !value || z.string().email().safeParse(value).success, 'Valid email is required'),
+  email: optionalEmailField(),
   rating: z.coerce.number().int().min(1).max(5),
   projectContext: optionalText(140),
   title: optionalText(160),
@@ -163,22 +221,14 @@ export const forumThreadSchema = z.object({
   title: requiredText('Topic title', 5, 160),
   content: requiredText('Topic description', 10, 5000),
   authorName: requiredText('Name', 2, 120),
-  authorEmail: z
-    .string()
-    .optional()
-    .transform((value) => sanitizeOptionalText(value, 320)?.toLowerCase())
-    .refine((value) => !value || z.string().email().safeParse(value).success, 'Valid email is required'),
+  authorEmail: optionalEmailField(),
   consentGiven: booleanish,
   honeypot: z.string().optional(),
 });
 
 export const forumReplySchema = z.object({
   authorName: requiredText('Name', 2, 120),
-  authorEmail: z
-    .string()
-    .optional()
-    .transform((value) => sanitizeOptionalText(value, 320)?.toLowerCase())
-    .refine((value) => !value || z.string().email().safeParse(value).success, 'Valid email is required'),
+  authorEmail: optionalEmailField(),
   content: requiredText('Reply', 10, 3000),
   honeypot: z.string().optional(),
 });
@@ -202,12 +252,7 @@ export const portalLoginSchema = z.object({
 export const portalProfileUpdateSchema = z.object({
   fullName: requiredText('Full name', 2, 160),
   displayName: optionalText(120),
-  phone: z
-    .string()
-    .optional()
-    .transform((value) => sanitizeOptionalText(value, 50))
-    .transform((value) => (value ? normalizePhone(value) : undefined))
-    .refine((value) => !value || value.replace(/\D/g, '').length >= 7, 'Phone is invalid'),
+  phone: optionalPhoneText('Phone'),
   companyName: optionalText(160),
   location: optionalText(180),
   contactPreference: z
@@ -463,6 +508,196 @@ export const deliveryProjectUpdateSchema = z.object({
   notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
+export const quoteApprovalSubmissionSchema = z.object({
+  approvalStatus: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 30))
+    .refine(
+      (value) => !value || QUOTE_APPROVAL_STATUSES.includes(value as (typeof QUOTE_APPROVAL_STATUSES)[number]),
+      'Invalid quote approval status',
+    ),
+  clientResponseNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+});
+
+export const documentApprovalSubmissionSchema = z.object({
+  approvalStatus: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 30))
+    .refine(
+      (value) => !value || DOCUMENT_APPROVAL_STATUSES.includes(value as (typeof DOCUMENT_APPROVAL_STATUSES)[number]),
+      'Invalid document approval status',
+    ),
+  clientResponseNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+});
+
+export const invoiceFormSchema = z.object({
+  title: requiredText('Title', 3, 180),
+  description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  billingType: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 20))
+    .refine((value) => !value || BILLING_TYPES.includes(value as (typeof BILLING_TYPES)[number]), 'Invalid billing type'),
+  status: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 30))
+    .refine((value) => !value || INVOICE_STATUSES.includes(value as (typeof INVOICE_STATUSES)[number]), 'Invalid invoice status'),
+  leadId: adminIdField,
+  quoteRequestId: adminIdField,
+  deliveryProjectId: adminIdField,
+  projectMilestoneId: adminIdField,
+  issuedAt: dateString,
+  dueDate: dateString,
+  subtotal: optionalCurrencyNumber,
+  tax: optionalCurrencyNumber,
+  total: optionalCurrencyNumber,
+  notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  paymentInstructions: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  footerNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  lineItemsText: z.string().optional().transform((value) => sanitizeOptionalText(value, 8000)),
+  clientVisible: booleanish.optional(),
+});
+
+export const paymentFormSchema = z.object({
+  invoiceId: adminIdField,
+  amount: z.coerce.number().positive().max(999999999),
+  paymentDate: dateString,
+  paymentReference: z.string().optional().transform((value) => sanitizeOptionalText(value, 160)),
+  notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  method: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 30))
+    .refine((value) => !value || PAYMENT_METHODS.includes(value as (typeof PAYMENT_METHODS)[number]), 'Invalid payment method'),
+});
+
+export const portalDocumentFormSchema = z.object({
+  title: requiredText('Title', 3, 180),
+  description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  type: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 40))
+    .refine(
+      (value) => !value || PORTAL_DOCUMENT_TYPES.includes(value as (typeof PORTAL_DOCUMENT_TYPES)[number]),
+      'Invalid document type',
+    ),
+  url: z
+    .string()
+    .transform((value) => sanitizeText(value, 2048))
+    .refine((value) => /^https?:\/\/[^\s]+$/i.test(value) || /^\/[^\s]*$/.test(value), 'Document URL must be a valid path or URL'),
+  fileName: z.string().optional().transform((value) => sanitizeOptionalText(value, 255)),
+  mimeType: z.string().optional().transform((value) => sanitizeOptionalText(value, 120)),
+  bytes: z.coerce.number().int().min(0).max(20_000_000).optional(),
+  leadId: adminIdField,
+  quoteRequestId: adminIdField,
+  deliveryProjectId: adminIdField,
+  approvalStatus: z
+    .string()
+    .optional()
+    .transform((value) => sanitizeOptionalText(value, 30))
+    .refine(
+      (value) => !value || DOCUMENT_APPROVAL_STATUSES.includes(value as (typeof DOCUMENT_APPROVAL_STATUSES)[number]),
+      'Invalid document approval status',
+    ),
+  clientVisible: booleanish.optional(),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
+  clientResponseNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+});
+
+export const supplierFormSchema = z.object({
+  name: requiredText('Supplier name', 2, 180),
+  contactPerson: optionalText(120),
+  email: optionalEmailField(),
+  phone: optionalPhoneText('Phone'),
+  alternatePhone: optionalPhoneText('Alternate phone'),
+  address: optionalText(220),
+  cityArea: optionalText(140),
+  notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  supplyCategoriesText: z.string().optional().transform((value) => sanitizeOptionalText(value, 1200)),
+  status: z.enum(SUPPLIER_STATUSES).default('ACTIVE'),
+});
+
+export const materialItemFormSchema = z.object({
+  name: requiredText('Material name', 2, 180),
+  code: optionalText(80),
+  category: optionalText(80),
+  description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  unit: requiredText('Unit', 1, 40),
+  estimatedUnitCost: optionalCurrencyNumber,
+  notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  status: z.enum(MATERIAL_ITEM_STATUSES).default('ACTIVE'),
+  defaultSupplierId: relationIdField,
+});
+
+export const projectProcurementItemFormSchema = z.object({
+  deliveryProjectId: requiredIdField('Project'),
+  materialItemId: relationIdField,
+  preferredSupplierId: relationIdField,
+  name: requiredText('Item name', 2, 180),
+  category: optionalText(80),
+  description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  unit: requiredText('Unit', 1, 40),
+  estimatedQuantity: requiredDecimalNumber('Estimated quantity', 0.01),
+  estimatedUnitCost: optionalCurrencyNumber,
+  requiredBy: dateString,
+  status: z.enum(PROCUREMENT_STATUSES).default('PLANNED'),
+  notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+});
+
+export const purchaseRequestFormSchema = z.object({
+  deliveryProjectId: requiredIdField('Project'),
+  supplierId: relationIdField,
+  status: z.enum(PURCHASE_REQUEST_STATUSES).default('DRAFT'),
+  requestDate: dateString,
+  issueDate: dateString,
+  expectedDeliveryDate: dateString,
+  notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  internalNotes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+});
+
+export const projectAssignmentFormSchema = z
+  .object({
+    deliveryProjectId: requiredIdField('Project'),
+    adminUserId: relationIdField,
+    role: z.enum(PROJECT_ASSIGNMENT_ROLES),
+    externalName: optionalText(160),
+    externalCompany: optionalText(160),
+    startDate: dateString,
+    endDate: dateString,
+    notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  })
+  .refine((value) => Boolean(value.adminUserId || value.externalName), {
+    message: 'Provide an internal assignee or an external contact.',
+    path: ['adminUserId'],
+  });
+
+export const siteTaskFormSchema = z.object({
+  deliveryProjectId: requiredIdField('Project'),
+  projectMilestoneId: relationIdField,
+  title: requiredText('Task title', 3, 180),
+  description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  status: z.enum(SITE_TASK_STATUSES).default('TODO'),
+  priority: z.enum(TASK_PRIORITIES).default('MEDIUM'),
+  dueDate: dateString,
+  assignedToAdminId: relationIdField,
+});
+
+export const siteLogFormSchema = z.object({
+  deliveryProjectId: requiredIdField('Project'),
+  logDate: requiredDateString('Log date'),
+  summary: requiredText('Summary', 5, 4000),
+  workCompleted: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  issuesRisks: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  nextSteps: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+  weatherConditions: optionalText(220),
+  attachmentUrlsText: z.string().optional().transform((value) => sanitizeOptionalText(value, 8000)),
+  clientVisible: booleanish.optional(),
+});
+
 export function splitLines(input?: string) {
   if (!input) return [];
 
@@ -479,6 +714,16 @@ export function splitMediaLines(input?: string) {
     .split(/\r?\n|,/)
     .map((line) => sanitizeText(line, 2048))
     .filter(Boolean);
+}
+
+export function splitTextList(input?: string, maxLength = 80, limit = 24) {
+  if (!input) return [];
+
+  return input
+    .split(/\r?\n|,/)
+    .map((line) => sanitizeText(line, maxLength))
+    .filter(Boolean)
+    .slice(0, limit);
 }
 
 export function splitTags(input?: string) {
@@ -515,6 +760,9 @@ export function normalizeSlugOrFallback(slug: string | undefined, title: string)
 export function parseBoolean(value: unknown, fallback = false) {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
+    if (['false', '0', 'no', 'off'].includes(value.toLowerCase())) {
+      return false;
+    }
     return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
   }
   return fallback;

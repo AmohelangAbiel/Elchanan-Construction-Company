@@ -8,6 +8,7 @@ import { buildQuoteResponseDraft } from '../../../../lib/quote-response';
 import { OPERATIONS_ROLES } from '../../../../lib/permissions';
 import { AdminTopNav } from '../../components/AdminTopNav';
 import { AdminFlash } from '../../components/AdminFlash';
+import { deriveQuoteApprovalStatus } from '../../../../lib/billing';
 
 type SearchParamValue = string | string[] | undefined;
 
@@ -66,6 +67,13 @@ async function getQuote(id: string) {
     include: {
       lead: {
         select: { id: true, fullName: true, status: true },
+      },
+      clientRespondedByClientUser: {
+        select: {
+          id: true,
+          fullName: true,
+          displayName: true,
+        },
       },
       assignedToAdmin: {
         select: { id: true, name: true, role: true },
@@ -189,6 +197,33 @@ export default async function AdminQuoteDetailPage({
             </Link>
           </div>
 
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="interactive-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Approval state</p>
+              <p className="mt-2 text-xl font-semibold text-white">
+                {deriveQuoteApprovalStatus({
+                  approvalStatus: quote.approvalStatus,
+                  quoteSentAt: quote.quoteSentAt,
+                  validityDays: quote.validityDays,
+                }).replace('_', ' ')}
+              </p>
+            </article>
+            <article className="interactive-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Viewed at</p>
+              <p className="mt-2 text-sm font-semibold text-white">{quote.clientViewedAt ? new Date(quote.clientViewedAt).toLocaleString() : 'Not yet viewed'}</p>
+            </article>
+            <article className="interactive-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Responded at</p>
+              <p className="mt-2 text-sm font-semibold text-white">{quote.clientRespondedAt ? new Date(quote.clientRespondedAt).toLocaleString() : 'Awaiting response'}</p>
+            </article>
+            <article className="interactive-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Response by</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {quote.clientRespondedByClientUser ? quote.clientRespondedByClientUser.displayName || quote.clientRespondedByClientUser.fullName : 'N/A'}
+              </p>
+            </article>
+          </div>
+
           <div className="mt-10 grid gap-6 lg:grid-cols-[0.95fr_0.85fr]">
             <section className="space-y-6">
               <div className="rounded-[2rem] border border-slate-800/70 bg-slate-950/70 p-6">
@@ -234,6 +269,9 @@ export default async function AdminQuoteDetailPage({
                   <p className="mt-3 text-lg font-semibold text-white">{quote.convertedProject.title}</p>
                   <p className="mt-1 text-sm text-emerald-100/90">Status: {quote.convertedProject.status}</p>
                   <p className="mt-1 text-xs text-emerald-100/70">Created {new Date(quote.convertedProject.createdAt).toLocaleString()}</p>
+                  <Link href={`/admin/projects/${quote.convertedProject.id}/operations`} className="mt-4 inline-flex text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100 hover:text-white">
+                    Open project operations
+                  </Link>
                 </div>
               ) : null}
 

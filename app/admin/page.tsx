@@ -3,17 +3,22 @@ import { Prisma } from '@prisma/client';
 import {
   AlertTriangle,
   BarChart3,
+  CalendarClock,
   ClipboardCheck,
   FolderKanban,
   MessageSquareMore,
+  NotebookPen,
+  PackageSearch,
   Quote,
   ShieldCheck,
+  ShoppingCart,
   TrendingUp,
   Users,
+  Wrench,
 } from 'lucide-react';
 import { requireAdminSession } from '../../lib/auth';
 import { getDashboardAnalytics } from '../../lib/analytics';
-import { canAccessCrm } from '../../lib/permissions';
+import { canAccessCrm, canAccessOperations } from '../../lib/permissions';
 import { prisma } from '../../lib/prisma';
 import { AdminTopNav } from './components/AdminTopNav';
 import { DistributionBars, MiniTrendChart } from './reports/components/Charts';
@@ -35,12 +40,29 @@ export default async function AdminDashboardPage() {
   const session = await requireAdminSession();
   const analytics = await getDashboardAnalytics(30);
   const hasCrmAccess = canAccessCrm(session.role);
+  const hasOperationsAccess = canAccessOperations(session.role);
 
   let leadStatusRows: Array<{ status: string; _count: { _all: number } }> = [];
   let overdueTasks = 0;
   let myOpenTasks: Awaited<ReturnType<typeof prisma.followUpTask.findMany>> = [];
   let myAssignedLeads = 0;
   let myAssignedQuotes = 0;
+  let activeProjectsNeedingProcurement = 0;
+  let overdueSiteTasks = 0;
+  let blockedSiteTasks = 0;
+  let pendingPurchaseRequests = 0;
+  let upcomingRequiredBy: Array<{
+    id: string;
+    name: string;
+    requiredBy: Date | null;
+    deliveryProject: { id: string; title: string; projectCode: string | null };
+  }> = [];
+  let recentSiteLogs: Array<{
+    id: string;
+    summary: string;
+    logDate: Date;
+    deliveryProject: { id: string; title: string; projectCode: string | null };
+  }> = [];
 
   if (hasCrmAccess) {
     try {
@@ -77,6 +99,90 @@ export default async function AdminDashboardPage() {
             deletedAt: null,
             assignedToAdminId: session.userId,
             status: { in: ['NEW', 'REVIEWING', 'RESPONDED'] },
+          },
+        }),
+      ]);
+    } catch (error) {
+      const isTableMissing =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        ['P2021', 'P2022'].includes(error.code);
+
+      if (!isTableMissing) {
+        throw error;
+      }
+    }
+  }
+
+  if (hasOperationsAccess) {
+    try {
+      [
+        activeProjectsNeedingProcurement,
+        overdueSiteTasks,
+        blockedSiteTasks,
+        pendingPurchaseRequests,
+        upcomingRequiredBy,
+        recentSiteLogs,
+      ] = await Promise.all([
+        prisma.deliveryProject.count({
+          where: {
+            deletedAt: null,
+            status: { in: ['ACTIVE', 'PLANNED', 'ON_HOLD'] },
+            procurementItems: {
+              some: {
+                status: { in: ['PLANNED', 'REQUESTED'] },
+              },
+            },
+          },
+        }),
+        prisma.siteTask.count({
+          where: {
+            status: { in: ['TODO', 'IN_PROGRESS', 'BLOCKED'] },
+            dueDate: { lt: new Date() },
+            deliveryProject: { deletedAt: null },
+          },
+        }),
+        prisma.siteTask.count({
+          where: {
+            status: 'BLOCKED',
+            deliveryProject: { deletedAt: null },
+          },
+        }),
+        prisma.purchaseRequest.count({
+          where: {
+            status: { in: ['DRAFT', 'SUBMITTED', 'APPROVED'] },
+            deliveryProject: { deletedAt: null },
+          },
+        }),
+        prisma.projectProcurementItem.findMany({
+          where: {
+            status: { in: ['PLANNED', 'REQUESTED', 'ORDERED'] },
+            requiredBy: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            },
+            deliveryProject: { deletedAt: null },
+          },
+          orderBy: [{ requiredBy: 'asc' }],
+          take: 5,
+          select: {
+            id: true,
+            name: true,
+            requiredBy: true,
+            deliveryProject: {
+              select: { id: true, title: true, projectCode: true },
+            },
+          },
+        }),
+        prisma.siteLog.findMany({
+          orderBy: [{ logDate: 'desc' }, { createdAt: 'desc' }],
+          take: 5,
+          select: {
+            id: true,
+            summary: true,
+            logDate: true,
+            deliveryProject: {
+              select: { id: true, title: true, projectCode: true },
+            },
           },
         }),
       ]);
@@ -219,6 +325,84 @@ export default async function AdminDashboardPage() {
                 <p className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-300">Assigned active quotes: <span className="font-semibold text-white">{myAssignedQuotes}</span></p>
                 <p className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-300">Assigned leads: <span className="font-semibold text-white">{myAssignedLeads}</span></p>
                 <Link href="/admin/quotes?mine=1" className="btn-ghost inline-flex px-4 py-2 text-xs uppercase tracking-[0.16em]">Open my quotes</Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {hasOperationsAccess ? (
+          <section className="mt-8 rounded-[2rem] border border-slate-800/70 bg-slate-950/75 p-6 shadow-glow">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Operations delivery board</h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  Internal procurement, execution, and field-reporting indicators for active projects.
+                </p>
+              </div>
+              <Link href="/admin/procurement" className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-cyan hover:text-white">
+                Open procurement
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <Link href="/admin/procurement" className="interactive-card rounded-2xl p-5">
+                <span className="icon-pill mb-3"><PackageSearch size={16} /></span>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Projects needing procurement</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{activeProjectsNeedingProcurement}</p>
+              </Link>
+              <Link href="/admin/site-tasks" className="interactive-card rounded-2xl p-5">
+                <span className="icon-pill mb-3"><Wrench size={16} /></span>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Overdue site tasks</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{overdueSiteTasks}</p>
+              </Link>
+              <Link href="/admin/site-tasks?status=BLOCKED" className="interactive-card rounded-2xl p-5">
+                <span className="icon-pill mb-3"><AlertTriangle size={16} /></span>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Blocked site tasks</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{blockedSiteTasks}</p>
+              </Link>
+              <Link href="/admin/procurement?status=SUBMITTED" className="interactive-card rounded-2xl p-5">
+                <span className="icon-pill mb-3"><ShoppingCart size={16} /></span>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Pending purchase records</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{pendingPurchaseRequests}</p>
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-slate-800/70 bg-slate-900/70 p-5">
+                <div className="flex items-center gap-2">
+                  <span className="icon-pill"><CalendarClock size={16} /></span>
+                  <p className="text-sm font-semibold text-white">Upcoming required-by dates</p>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {upcomingRequiredBy.length ? upcomingRequiredBy.map((item) => (
+                    <Link key={item.id} href={`/admin/projects/${item.deliveryProject.id}/operations`} className="block rounded-xl border border-slate-800 bg-slate-950/70 p-3 transition hover:border-brand-cyan/45">
+                      <p className="font-semibold text-white">{item.name}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {item.deliveryProject.title} · Due {item.requiredBy ? new Date(item.requiredBy).toLocaleDateString() : 'Date not set'}
+                      </p>
+                    </Link>
+                  )) : (
+                    <p className="text-sm text-slate-400">No requirement deadlines are approaching in the next 7 days.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800/70 bg-slate-900/70 p-5">
+                <div className="flex items-center gap-2">
+                  <span className="icon-pill"><NotebookPen size={16} /></span>
+                  <p className="text-sm font-semibold text-white">Recent site logs</p>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {recentSiteLogs.length ? recentSiteLogs.map((item) => (
+                    <Link key={item.id} href={`/admin/projects/${item.deliveryProject.id}/operations`} className="block rounded-xl border border-slate-800 bg-slate-950/70 p-3 transition hover:border-brand-cyan/45">
+                      <p className="font-semibold text-white">{item.deliveryProject.title}</p>
+                      <p className="mt-1 text-sm text-slate-300">{item.summary}</p>
+                      <p className="mt-2 text-xs text-slate-500">{new Date(item.logDate).toLocaleDateString()}</p>
+                    </Link>
+                  )) : (
+                    <p className="text-sm text-slate-400">No site log entries have been captured yet.</p>
+                  )}
+                </div>
               </div>
             </div>
           </section>

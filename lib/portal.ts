@@ -65,3 +65,33 @@ export function getPortalDocumentOwnershipFilter(leadId: string): Prisma.PortalD
     ],
   };
 }
+
+export function getPortalInvoiceOwnershipFilter(leadId: string): Prisma.InvoiceWhereInput {
+  return {
+    OR: [
+      { leadId },
+      {
+        quoteRequest: {
+          leadId,
+          deletedAt: null,
+        },
+      },
+      {
+        deliveryProject: {
+          leadId,
+          deletedAt: null,
+          portalVisible: true,
+        },
+      },
+      {
+        projectMilestone: {
+          deliveryProject: {
+            leadId,
+            deletedAt: null,
+            portalVisible: true,
+          },
+        },
+      },
+    ],
+  };
+}

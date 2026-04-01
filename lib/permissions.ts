@@ -15,6 +15,8 @@ export const REPORTING_ROLES: UserRole[] = ALL_ADMIN_ROLES;
 export const MEDIA_ROLES: UserRole[] = ['SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER', 'SALES'];
 
 export const CRM_ROLES: UserRole[] = ['SUPER_ADMIN', 'ADMIN', 'SALES'];
+export const PROCUREMENT_ROLES: UserRole[] = OPERATIONS_ROLES;
+export const SITE_OPERATIONS_ROLES: UserRole[] = OPERATIONS_ROLES;
 
 export function hasRoleAccess(role: UserRole, allowedRoles: UserRole[]) {
   if (!allowedRoles.length) return true;
@@ -42,6 +44,14 @@ export function canAccessCrm(role: UserRole) {
   return hasRoleAccess(role, CRM_ROLES);
 }
 
+export function canAccessProcurement(role: UserRole) {
+  return hasRoleAccess(role, PROCUREMENT_ROLES);
+}
+
+export function canAccessSiteOperations(role: UserRole) {
+  return hasRoleAccess(role, SITE_OPERATIONS_ROLES);
+}
+
 export type AdminNavItem = {
   href: string;
   label: string;
@@ -55,6 +65,13 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: '/admin/tasks', label: 'Tasks', allowedRoles: CRM_ROLES },
   { href: '/admin/enquiries', label: 'Enquiries', allowedRoles: OPERATIONS_ROLES },
   { href: '/admin/quotes', label: 'Quotes', allowedRoles: OPERATIONS_ROLES },
+  { href: '/admin/procurement', label: 'Procurement', allowedRoles: PROCUREMENT_ROLES },
+  { href: '/admin/suppliers', label: 'Suppliers', allowedRoles: PROCUREMENT_ROLES },
+  { href: '/admin/materials', label: 'Materials', allowedRoles: PROCUREMENT_ROLES },
+  { href: '/admin/site-tasks', label: 'Site Tasks', allowedRoles: SITE_OPERATIONS_ROLES },
+  { href: '/admin/site-logs', label: 'Site Logs', allowedRoles: SITE_OPERATIONS_ROLES },
+  { href: '/admin/invoices', label: 'Invoices', allowedRoles: OPERATIONS_ROLES },
+  { href: '/admin/contracts', label: 'Contracts', allowedRoles: OPERATIONS_ROLES },
   { href: '/admin/reviews', label: 'Reviews', allowedRoles: MODERATION_ROLES },
   { href: '/admin/forum', label: 'Forum', allowedRoles: MODERATION_ROLES },
   { href: '/admin/reports', label: 'Reports', allowedRoles: REPORTING_ROLES },

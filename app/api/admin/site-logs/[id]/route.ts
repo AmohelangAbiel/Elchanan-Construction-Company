@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server';
+import { requireAdminAuth } from '../../../../../lib/auth';
+import { enforceAdminApiRole } from '../../../../../lib/admin-access';
+import { BODY_SIZE_LIMITS } from '../../../../../lib/constants';
+import { parseBoolean, siteLogFormSchema, splitMediaLines } from '../../../../../lib/validators';
+import { SITE_OPERATIONS_ROLES } from '../../../../../lib/permissions';
+import { prisma } from '../../../../../lib/prisma';
+import {
+  assertSameOrigin,
+  formDataToObject,
+  getRequestId,
+  isRequestBodyWithinLimit,
+  jsonError,
+  safeRedirectPath,
+} from '../../../../../lib/api';
+import { buildRequestLogMeta } from '../../../../../lib/logger';
+
+export async function POST(request: Request, { params }: { params: { id: string } }) {
+  const requestId = getRequestId(request);
+  const requestMeta = buildRequestLogMeta(request, 'admin.site_logs.update', requestId);
+
+  if (!assertSameOrigin(request)) return jsonError('Invalid request origin.', 403, undefined, { requestId });
+  if (!isRequestBodyWithinLimit(request, BODY_SIZE_LIMITS.adminForm)) {
+    return jsonError('Payload too large.', 413, undefined, { requestId });
+  }
+
+  const session = await requireAdminAuth();
+  const roleError = enforceAdminApiRole({
+    session,
+    allowedRoles: SITE_OPERATIONS_ROLES,
+    requestId,
+    requestMeta,
+    unauthorizedEvent: 'admin.site_logs_update_unauthorized',
+    forbiddenEvent: 'admin.site_logs_update_forbidden',
+  });
+  if (roleError) return roleError;
+  const adminSession = session!;
+
+  const formData = await request.formData().catch(() => null);
+  if (!formData) return jsonError('Unable to parse request.', 400, undefined, { requestId });
+
+  const payload = formDataToObject(formData);
+  const result = siteLogFormSchema.safeParse(payload);
+  if (!result.success) {
+    return jsonError('Validation failed.', 422, result.error.flatten(), { requestId });
+  }
+
+  const existing = await prisma.siteLog.findUnique({
+    where: { id: params.id },
+    select: { id: true, deliveryProjectId: true },
+  });
+
+  if (!existing) {
+    return jsonError('Site log was not found.', 404, undefined, { requestId });
+  }
+
+  if (result.data.deliveryProjectId !== existing.deliveryProjectId) {
+    return jsonError('Project context mismatch for site log.', 422, undefined, { requestId });
+  }
+
+  await prisma.siteLog.update({
+    where: { id: params.id },
+    data: {
+      logDate: new Date(result.data.logDate),
+      summary: result.data.summary,
+      workCompleted: result.data.workCompleted || null,
+      issuesRisks: result.data.issuesRisks || null,
+      nextSteps: result.data.nextSteps || null,
+      weatherConditions: result.data.weatherConditions || null,
+      attachmentUrls: splitMediaLines(result.data.attachmentUrlsText),
+      clientVisible: parseBoolean(result.data.clientVisible, false),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actor: adminSession.email,
+      action: 'SITE_LOG_UPDATED',
+      entity: 'SiteLog',
+      entityId: params.id,
+      actorAdminId: adminSession.userId,
+      details: {
+        deliveryProjectId: existing.deliveryProjectId,
+      },
+    },
+  });
+
+  const baseReturnTo = safeRedirectPath(
+    payload.returnTo,
+    `/admin/projects/${existing.deliveryProjectId}/operations`,
+    ['/admin/projects', '/admin/site-logs'],
+  );
+  const redirectUrl = new URL(baseReturnTo, request.url);
+  redirectUrl.searchParams.set('siteLogUpdated', '1');
+  const response = NextResponse.redirect(redirectUrl);
+  response.headers.set('x-request-id', requestId);
+  return response;
+}

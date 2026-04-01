@@ -31,6 +31,49 @@ enum QuoteStatus {
   ARCHIVED
 }
 
+enum QuoteApprovalStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  ARCHIVED
+}
+
+enum DocumentApprovalStatus {
+  DRAFT
+  SENT
+  VIEWED
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOID
+  CANCELLED
+}
+
+enum BillingType {
+  DEPOSIT
+  MILESTONE
+  FINAL
+  OTHER
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH
+  CARD
+  OTHER
+}
+
 enum LeadSourceType {
   DIRECT
   CONTACT_PAGE
@@ -85,6 +128,46 @@ enum DeliveryProjectStatus {
   CANCELLED
 }
 
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum MaterialItemStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ProcurementStatus {
+  PLANNED
+  REQUESTED
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+enum PurchaseRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum ProjectAssignmentRole {
+  PROJECT_MANAGER
+  SITE_SUPERVISOR
+  SALES_SUPPORT
+  GENERAL_STAFF
+  CONTRACTOR
+  OTHER
+}
+
 enum TaskStatus {
   OPEN
   IN_PROGRESS
@@ -97,6 +180,14 @@ enum TaskPriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+enum SiteTaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
 }
 
 enum ActivityType {
@@ -150,37 +241,51 @@ enum PortalDocumentType {
   GENERAL
   IMAGE
   CONTRACT
+  AGREEMENT
+  SCOPE_DOCUMENT
+  TERMS_ATTACHMENT
+  OTHER
   INVOICE
 }
 
 model AdminUser {
-  id                      String             @id @default(cuid())
-  email                   String             @unique
-  password                String
-  name                    String
-  role                    UserRole           @default(ADMIN)
-  isActive                Boolean            @default(true)
-  sessionVersion          Int                @default(0)
-  lastLoginAt             DateTime?
-  createdAt               DateTime           @default(now())
-  updatedAt               DateTime           @updatedAt
-  auditLogs               AuditLog[]
-  communicationLogs       CommunicationLog[]
-  uploadedAssets          MediaAsset[]
-  assignedLeads           Lead[]             @relation("LeadAssignee")
-  ownedEnquiries          ContactEnquiry[]   @relation("EnquiryAssignee")
-  ownedQuotes             QuoteRequest[]     @relation("QuoteAssignee")
-  assignedTasks           FollowUpTask[]     @relation("TaskAssignee")
-  createdTasks            FollowUpTask[]     @relation("TaskCreator")
-  createdDeliveryProjects DeliveryProject[]  @relation("DeliveryProjectCreator")
-  projectUpdates          ProjectUpdate[]    @relation("ProjectUpdateAuthor")
-  portalDocuments         PortalDocument[]   @relation("PortalDocumentUploader")
-  activityLogs            ActivityLog[]
+  id                        String                   @id @default(cuid())
+  email                     String                   @unique
+  password                  String
+  name                      String
+  role                      UserRole                 @default(ADMIN)
+  isActive                  Boolean                  @default(true)
+  sessionVersion            Int                      @default(0)
+  lastLoginAt               DateTime?
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  auditLogs                 AuditLog[]
+  communicationLogs         CommunicationLog[]
+  uploadedAssets            MediaAsset[]
+  assignedLeads             Lead[]                   @relation("LeadAssignee")
+  ownedEnquiries            ContactEnquiry[]         @relation("EnquiryAssignee")
+  ownedQuotes               QuoteRequest[]           @relation("QuoteAssignee")
+  assignedTasks             FollowUpTask[]           @relation("TaskAssignee")
+  createdTasks              FollowUpTask[]           @relation("TaskCreator")
+  createdDeliveryProjects   DeliveryProject[]        @relation("DeliveryProjectCreator")
+  issuedInvoices            Invoice[]                @relation("InvoiceIssuer")
+  recordedPayments          Payment[]                @relation("PaymentRecorder")
+  projectUpdates            ProjectUpdate[]          @relation("ProjectUpdateAuthor")
+  portalDocuments           PortalDocument[]         @relation("PortalDocumentUploader")
+  activityLogs              ActivityLog[]
+  createdProcurementItems   ProjectProcurementItem[] @relation("ProcurementItemCreator")
+  createdPurchaseRequests   PurchaseRequest[]        @relation("PurchaseRequestCreator")
+  approvedPurchaseRequests  PurchaseRequest[]        @relation("PurchaseRequestApprover")
+  projectAssignments        ProjectAssignment[]      @relation("ProjectAssignmentAdmin")
+  createdProjectAssignments ProjectAssignment[]      @relation("ProjectAssignmentCreator")
+  assignedSiteTasks         SiteTask[]               @relation("SiteTaskAssignee")
+  createdSiteTasks          SiteTask[]               @relation("SiteTaskCreator")
+  authoredSiteLogs          SiteLog[]                @relation("SiteLogAuthor")
 }
 
 model ClientUser {
-  id                String   @id @default(cuid())
-  email             String   @unique
+  id                String           @id @default(cuid())
+  email             String           @unique
   password          String
   fullName          String
   displayName       String?
@@ -188,13 +293,16 @@ model ClientUser {
   companyName       String?
   location          String?
   contactPreference String?
-  isActive          Boolean  @default(true)
-  sessionVersion    Int      @default(0)
+  isActive          Boolean          @default(true)
+  sessionVersion    Int              @default(0)
   lastLoginAt       DateTime?
   leadId            String?
-  lead              Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  lead              Lead?            @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  quoteResponses    QuoteRequest[]   @relation("QuoteClientResponse")
+  documentResponses PortalDocument[] @relation("DocumentClientResponse")
+  invoiceViews      Invoice[]        @relation("InvoiceClientViewer")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   @@index([leadId, isActive])
   @@index([isActive, createdAt])
@@ -258,6 +366,7 @@ model Lead {
   activities        ActivityLog[]
   clientUsers       ClientUser[]
   portalDocuments   PortalDocument[]
+  invoices          Invoice[]
 
   @@unique([email, phone])
   @@index([status, createdAt])
@@ -312,58 +421,67 @@ model ContactEnquiry {
 }
 
 model QuoteRequest {
-  id                   String             @id @default(cuid())
-  leadId               String?
-  lead                 Lead?              @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  fullName             String
-  email                String
-  phone                String
-  serviceType          String
-  projectType          String?
-  location             String?
-  estimatedBudgetRange String?            @map("estimatedBudget")
-  preferredStartDate   DateTime?
-  siteVisitRequired    Boolean            @default(false)
-  projectDescription   String
-  attachmentUrl        String?
-  consentGiven         Boolean            @default(false)
-  referenceCode        String             @unique @default(uuid())
-  status               QuoteStatus        @default(NEW)
-  assignedToAdminId    String?
-  assignedToAdmin      AdminUser?         @relation("QuoteAssignee", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
-  internalNotes        String?
-  followUpNotes        String?
-  lastContactedAt      DateTime?
-  quoteSentAt          DateTime?
-  quoteSummary         String?
-  scopeNotes           String?
-  lineItems            Json?
-  estimateSubtotal     Decimal?           @db.Decimal(12, 2)
-  estimateTax          Decimal?           @db.Decimal(12, 2)
-  estimateTotal        Decimal?           @db.Decimal(12, 2)
-  validityDays         Int                @default(14)
-  exclusions           String?
-  assumptions          String?
-  termsDisclaimer      String?
-  sourceType           LeadSourceType     @default(DIRECT)
-  sourcePath           String?
-  sourcePage           String?
-  sourceReferrer       String?
-  utmSource            String?
-  utmMedium            String?
-  utmCampaign          String?
-  sourceIpHash         String?
-  userAgent            String?
-  deletedAt            DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  communications       CommunicationLog[]
-  tasks                FollowUpTask[]
-  activities           ActivityLog[]
-  convertedProject     DeliveryProject?
-  portalDocuments      PortalDocument[]
+  id                            String              @id @default(cuid())
+  leadId                        String?
+  lead                          Lead?               @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  fullName                      String
+  email                         String
+  phone                         String
+  serviceType                   String
+  projectType                   String?
+  location                      String?
+  estimatedBudgetRange          String?             @map("estimatedBudget")
+  preferredStartDate            DateTime?
+  siteVisitRequired             Boolean             @default(false)
+  projectDescription            String
+  attachmentUrl                 String?
+  consentGiven                  Boolean             @default(false)
+  referenceCode                 String              @unique @default(uuid())
+  status                        QuoteStatus         @default(NEW)
+  approvalStatus                QuoteApprovalStatus @default(DRAFT)
+  clientViewedAt                DateTime?
+  clientRespondedAt             DateTime?
+  clientResponseNote            String?
+  clientRespondedByClientUserId String?
+  clientRespondedByClientUser   ClientUser?         @relation("QuoteClientResponse", fields: [clientRespondedByClientUserId], references: [id], onDelete: SetNull)
+  assignedToAdminId             String?
+  assignedToAdmin               AdminUser?          @relation("QuoteAssignee", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
+  internalNotes                 String?
+  followUpNotes                 String?
+  lastContactedAt               DateTime?
+  quoteSentAt                   DateTime?
+  quoteSummary                  String?
+  scopeNotes                    String?
+  lineItems                     Json?
+  estimateSubtotal              Decimal?            @db.Decimal(12, 2)
+  estimateTax                   Decimal?            @db.Decimal(12, 2)
+  estimateTotal                 Decimal?            @db.Decimal(12, 2)
+  validityDays                  Int                 @default(14)
+  exclusions                    String?
+  assumptions                   String?
+  termsDisclaimer               String?
+  sourceType                    LeadSourceType      @default(DIRECT)
+  sourcePath                    String?
+  sourcePage                    String?
+  sourceReferrer                String?
+  utmSource                     String?
+  utmMedium                     String?
+  utmCampaign                   String?
+  sourceIpHash                  String?
+  userAgent                     String?
+  deletedAt                     DateTime?
+  createdAt                     DateTime            @default(now())
+  updatedAt                     DateTime            @updatedAt
+  communications                CommunicationLog[]
+  tasks                         FollowUpTask[]
+  activities                    ActivityLog[]
+  convertedProject              DeliveryProject?
+  portalDocuments               PortalDocument[]
+  invoices                      Invoice[]
 
   @@index([status, createdAt])
+  @@index([approvalStatus, createdAt])
+  @@index([clientRespondedAt, approvalStatus])
   @@index([email, createdAt])
   @@index([deletedAt, createdAt])
   @@index([quoteSentAt, status])
@@ -520,31 +638,37 @@ model PricingPlan {
 }
 
 model DeliveryProject {
-  id               String                @id @default(cuid())
-  title            String
-  status           DeliveryProjectStatus @default(PLANNED)
-  portalVisible    Boolean               @default(true)
-  projectCode      String?               @unique
-  clientSummary    String?
-  startTarget      DateTime?
+  id                  String                   @id @default(cuid())
+  title               String
+  status              DeliveryProjectStatus    @default(PLANNED)
+  portalVisible       Boolean                  @default(true)
+  projectCode         String?                  @unique
+  clientSummary       String?
+  startTarget         DateTime?
   estimatedCompletion DateTime?
-  lastClientUpdateAt DateTime?
-  notes            String?
-  quoteRequestId   String?               @unique
-  quoteRequest     QuoteRequest?         @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
-  leadId           String?
-  lead             Lead?                 @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  createdByAdminId String?
-  createdByAdmin   AdminUser?            @relation("DeliveryProjectCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
-  deletedAt        DateTime?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  tasks            FollowUpTask[]
-  communications   CommunicationLog[]
-  activities       ActivityLog[]
-  milestones       ProjectMilestone[]
-  updates          ProjectUpdate[]
-  portalDocuments  PortalDocument[]
+  lastClientUpdateAt  DateTime?
+  notes               String?
+  quoteRequestId      String?                  @unique
+  quoteRequest        QuoteRequest?            @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  leadId              String?
+  lead                Lead?                    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  createdByAdminId    String?
+  createdByAdmin      AdminUser?               @relation("DeliveryProjectCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  deletedAt           DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  tasks               FollowUpTask[]
+  communications      CommunicationLog[]
+  activities          ActivityLog[]
+  milestones          ProjectMilestone[]
+  updates             ProjectUpdate[]
+  portalDocuments     PortalDocument[]
+  invoices            Invoice[]
+  procurementItems    ProjectProcurementItem[]
+  purchaseRequests    PurchaseRequest[]
+  assignments         ProjectAssignment[]
+  siteTasks           SiteTask[]
+  siteLogs            SiteLog[]
 
   @@index([status, createdAt])
   @@index([leadId, status])
@@ -552,20 +676,171 @@ model DeliveryProject {
   @@index([deletedAt, createdAt])
 }
 
-model ProjectMilestone {
-  id                String               @id @default(cuid())
+model Supplier {
+  id                        String                   @id @default(cuid())
+  name                      String
+  contactPerson             String?
+  email                     String?
+  phone                     String?
+  alternatePhone            String?
+  address                   String?
+  cityArea                  String?
+  notes                     String?
+  supplyCategories          String[]                 @default([])
+  status                    SupplierStatus           @default(ACTIVE)
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  materials                 MaterialItem[]           @relation("MaterialDefaultSupplier")
+  preferredProcurementItems ProjectProcurementItem[] @relation("ProcurementPreferredSupplier")
+  purchaseRequests          PurchaseRequest[]
+
+  @@index([status, updatedAt])
+  @@index([cityArea, status])
+}
+
+model MaterialItem {
+  id                      String                    @id @default(cuid())
+  name                    String
+  code                    String?                   @unique
+  category                String?
+  description             String?
+  unit                    String
+  estimatedUnitCost       Decimal?                  @db.Decimal(12, 2)
+  notes                   String?
+  status                  MaterialItemStatus        @default(ACTIVE)
+  defaultSupplierId       String?
+  defaultSupplier         Supplier?                 @relation("MaterialDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: SetNull)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  projectProcurementItems ProjectProcurementItem[]
+  purchaseLineItems       PurchaseRequestLineItem[]
+
+  @@index([status, category, updatedAt])
+  @@index([defaultSupplierId, status])
+}
+
+model ProjectProcurementItem {
+  id                  String                    @id @default(cuid())
+  deliveryProjectId   String
+  deliveryProject     DeliveryProject           @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
+  materialItemId      String?
+  materialItem        MaterialItem?             @relation(fields: [materialItemId], references: [id], onDelete: SetNull)
+  preferredSupplierId String?
+  preferredSupplier   Supplier?                 @relation("ProcurementPreferredSupplier", fields: [preferredSupplierId], references: [id], onDelete: SetNull)
+  createdByAdminId    String?
+  createdByAdmin      AdminUser?                @relation("ProcurementItemCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  name                String
+  category            String?
+  description         String?
+  unit                String
+  estimatedQuantity   Decimal                   @db.Decimal(12, 2)
+  estimatedUnitCost   Decimal?                  @db.Decimal(12, 2)
+  requiredBy          DateTime?
+  status              ProcurementStatus         @default(PLANNED)
+  notes               String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  purchaseLineItems   PurchaseRequestLineItem[]
+
+  @@index([deliveryProjectId, status, requiredBy])
+  @@index([preferredSupplierId, status, requiredBy])
+  @@index([materialItemId, status])
+  @@index([createdByAdminId, createdAt])
+}
+
+model PurchaseRequest {
+  id                   String                    @id @default(cuid())
+  referenceCode        String                    @unique
+  deliveryProjectId    String
+  deliveryProject      DeliveryProject           @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
+  supplierId           String?
+  supplier             Supplier?                 @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdByAdminId     String?
+  createdByAdmin       AdminUser?                @relation("PurchaseRequestCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  approvedByAdminId    String?
+  approvedByAdmin      AdminUser?                @relation("PurchaseRequestApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  status               PurchaseRequestStatus     @default(DRAFT)
+  requestDate          DateTime                  @default(now())
+  issueDate            DateTime?
+  expectedDeliveryDate DateTime?
+  submittedAt          DateTime?
+  approvedAt           DateTime?
+  orderedAt            DateTime?
+  receivedAt           DateTime?
+  notes                String?
+  internalNotes        String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  lineItems            PurchaseRequestLineItem[]
+
+  @@index([deliveryProjectId, status, createdAt])
+  @@index([supplierId, status, expectedDeliveryDate])
+  @@index([status, expectedDeliveryDate])
+  @@index([createdByAdminId, createdAt])
+  @@index([approvedByAdminId, createdAt])
+}
+
+model PurchaseRequestLineItem {
+  id                       String                  @id @default(cuid())
+  purchaseRequestId        String
+  purchaseRequest          PurchaseRequest         @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  projectProcurementItemId String?
+  projectProcurementItem   ProjectProcurementItem? @relation(fields: [projectProcurementItemId], references: [id], onDelete: SetNull)
+  materialItemId           String?
+  materialItem             MaterialItem?           @relation(fields: [materialItemId], references: [id], onDelete: SetNull)
+  description              String
+  quantity                 Decimal                 @db.Decimal(12, 2)
+  unit                     String
+  estimatedUnitCost        Decimal?                @db.Decimal(12, 2)
+  actualUnitCost           Decimal?                @db.Decimal(12, 2)
+  receivedQuantity         Decimal?                @db.Decimal(12, 2)
+  notes                    String?
+  sortOrder                Int                     @default(0)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+
+  @@index([purchaseRequestId, sortOrder])
+  @@index([projectProcurementItemId])
+  @@index([materialItemId])
+}
+
+model ProjectAssignment {
+  id                String                @id @default(cuid())
   deliveryProjectId String
-  deliveryProject   DeliveryProject      @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
+  deliveryProject   DeliveryProject       @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
+  adminUserId       String?
+  adminUser         AdminUser?            @relation("ProjectAssignmentAdmin", fields: [adminUserId], references: [id], onDelete: SetNull)
+  createdByAdminId  String?
+  createdByAdmin    AdminUser?            @relation("ProjectAssignmentCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  role              ProjectAssignmentRole
+  externalName      String?
+  externalCompany   String?
+  startDate         DateTime?
+  endDate           DateTime?
+  notes             String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([deliveryProjectId, role, startDate])
+  @@index([adminUserId, startDate])
+}
+
+model ProjectMilestone {
+  id                String                 @id @default(cuid())
+  deliveryProjectId String
+  deliveryProject   DeliveryProject        @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
   title             String
   description       String?
   status            ProjectMilestoneStatus @default(PENDING)
   targetDate        DateTime?
   completedDate     DateTime?
-  sortOrder         Int                  @default(0)
-  clientVisible     Boolean              @default(true)
+  sortOrder         Int                    @default(0)
+  clientVisible     Boolean                @default(true)
   deletedAt         DateTime?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  invoices          Invoice[]
+  siteTasks         SiteTask[]
 
   @@index([deliveryProjectId, clientVisible, sortOrder])
   @@index([deliveryProjectId, status, targetDate])
@@ -596,34 +871,171 @@ model ProjectUpdate {
 }
 
 model PortalDocument {
-  id                String            @id @default(cuid())
-  title             String
-  description       String?
-  type              PortalDocumentType @default(GENERAL)
-  url               String
-  fileName          String?
-  mimeType          String?
-  bytes             Int?
-  clientVisible     Boolean           @default(true)
-  sortOrder         Int               @default(0)
-  leadId            String?
-  lead              Lead?             @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  quoteRequestId    String?
-  quoteRequest      QuoteRequest?     @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
-  deliveryProjectId String?
-  deliveryProject   DeliveryProject?  @relation(fields: [deliveryProjectId], references: [id], onDelete: SetNull)
-  uploadedByAdminId String?
-  uploadedByAdmin   AdminUser?        @relation("PortalDocumentUploader", fields: [uploadedByAdminId], references: [id], onDelete: SetNull)
-  deletedAt         DateTime?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id                            String                 @id @default(cuid())
+  title                         String
+  description                   String?
+  type                          PortalDocumentType     @default(GENERAL)
+  url                           String
+  fileName                      String?
+  mimeType                      String?
+  bytes                         Int?
+  clientVisible                 Boolean                @default(true)
+  approvalStatus                DocumentApprovalStatus @default(DRAFT)
+  clientViewedAt                DateTime?
+  clientRespondedAt             DateTime?
+  clientResponseNote            String?
+  clientRespondedByClientUserId String?
+  clientRespondedByClientUser   ClientUser?            @relation("DocumentClientResponse", fields: [clientRespondedByClientUserId], references: [id], onDelete: SetNull)
+  sortOrder                     Int                    @default(0)
+  leadId                        String?
+  lead                          Lead?                  @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  quoteRequestId                String?
+  quoteRequest                  QuoteRequest?          @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  deliveryProjectId             String?
+  deliveryProject               DeliveryProject?       @relation(fields: [deliveryProjectId], references: [id], onDelete: SetNull)
+  uploadedByAdminId             String?
+  uploadedByAdmin               AdminUser?             @relation("PortalDocumentUploader", fields: [uploadedByAdminId], references: [id], onDelete: SetNull)
+  deletedAt                     DateTime?
+  createdAt                     DateTime               @default(now())
+  updatedAt                     DateTime               @updatedAt
 
   @@index([leadId, clientVisible, createdAt])
+  @@index([approvalStatus, clientVisible, createdAt])
   @@index([quoteRequestId, clientVisible, createdAt])
   @@index([deliveryProjectId, clientVisible, createdAt])
   @@index([type, clientVisible, createdAt])
   @@index([uploadedByAdminId, createdAt])
   @@index([deletedAt, createdAt])
+}
+
+model Invoice {
+  id                         String            @id @default(cuid())
+  invoiceNumber              String            @unique
+  title                      String
+  description                String?
+  billingType                BillingType       @default(OTHER)
+  status                     InvoiceStatus     @default(DRAFT)
+  clientVisible              Boolean           @default(false)
+  leadId                     String?
+  lead                       Lead?             @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  quoteRequestId             String?
+  quoteRequest               QuoteRequest?     @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  deliveryProjectId          String?
+  deliveryProject            DeliveryProject?  @relation(fields: [deliveryProjectId], references: [id], onDelete: SetNull)
+  projectMilestoneId         String?
+  projectMilestone           ProjectMilestone? @relation(fields: [projectMilestoneId], references: [id], onDelete: SetNull)
+  issuedByAdminId            String?
+  issuedByAdmin              AdminUser?        @relation("InvoiceIssuer", fields: [issuedByAdminId], references: [id], onDelete: SetNull)
+  issuedAt                   DateTime?
+  dueDate                    DateTime?
+  subtotal                   Decimal?          @db.Decimal(12, 2)
+  tax                        Decimal?          @db.Decimal(12, 2)
+  total                      Decimal?          @db.Decimal(12, 2)
+  notes                      String?
+  paymentInstructions        String?
+  footerNote                 String?
+  clientViewedAt             DateTime?
+  clientViewedByClientUserId String?
+  clientViewedByClientUser   ClientUser?       @relation("InvoiceClientViewer", fields: [clientViewedByClientUserId], references: [id], onDelete: SetNull)
+  paidAt                     DateTime?
+  voidedAt                   DateTime?
+  cancelledAt                DateTime?
+  deletedAt                  DateTime?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+  lineItems                  InvoiceLineItem[]
+  payments                   Payment[]
+
+  @@index([leadId, status, dueDate])
+  @@index([quoteRequestId, status, createdAt])
+  @@index([deliveryProjectId, status, createdAt])
+  @@index([projectMilestoneId, status, createdAt])
+  @@index([issuedByAdminId, createdAt])
+  @@index([clientVisible, status, dueDate])
+  @@index([deletedAt, createdAt])
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal? @db.Decimal(12, 2)
+  amount      Decimal  @db.Decimal(12, 2)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([invoiceId, sortOrder])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  invoiceId         String
+  invoice           Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount            Decimal       @db.Decimal(12, 2)
+  paymentDate       DateTime
+  paymentReference  String?
+  notes             String?
+  method            PaymentMethod
+  recordedByAdminId String?
+  recordedByAdmin   AdminUser?    @relation("PaymentRecorder", fields: [recordedByAdminId], references: [id], onDelete: SetNull)
+  deletedAt         DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([invoiceId, paymentDate])
+  @@index([recordedByAdminId, createdAt])
+  @@index([deletedAt, createdAt])
+}
+
+model SiteTask {
+  id                 String            @id @default(cuid())
+  deliveryProjectId  String
+  deliveryProject    DeliveryProject   @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
+  projectMilestoneId String?
+  projectMilestone   ProjectMilestone? @relation(fields: [projectMilestoneId], references: [id], onDelete: SetNull)
+  title              String
+  description        String?
+  status             SiteTaskStatus    @default(TODO)
+  priority           TaskPriority      @default(MEDIUM)
+  dueDate            DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  assignedToAdminId  String?
+  assignedToAdmin    AdminUser?        @relation("SiteTaskAssignee", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
+  createdByAdminId   String?
+  createdByAdmin     AdminUser?        @relation("SiteTaskCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([deliveryProjectId, status, dueDate])
+  @@index([assignedToAdminId, status, dueDate])
+  @@index([projectMilestoneId, status])
+  @@index([createdByAdminId, createdAt])
+}
+
+model SiteLog {
+  id                String          @id @default(cuid())
+  deliveryProjectId String
+  deliveryProject   DeliveryProject @relation(fields: [deliveryProjectId], references: [id], onDelete: Cascade)
+  logDate           DateTime
+  summary           String
+  workCompleted     String?
+  issuesRisks       String?
+  nextSteps         String?
+  weatherConditions String?
+  attachmentUrls    String[]        @default([])
+  clientVisible     Boolean         @default(false)
+  createdByAdminId  String?
+  createdByAdmin    AdminUser?      @relation("SiteLogAuthor", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([deliveryProjectId, logDate])
+  @@index([createdByAdminId, logDate])
+  @@index([clientVisible, logDate])
 }
 
 model FollowUpTask {

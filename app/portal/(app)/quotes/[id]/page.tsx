@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { requirePortalSession } from '../../../../../lib/portal-auth';
 import { prisma } from '../../../../../lib/prisma';
 import { PortalContactActions } from '../../components/PortalContactActions';
+import { deriveQuoteApprovalStatus, formatCurrency } from '../../../../../lib/billing';
+import { PortalApprovalTracker } from '../../components/PortalApprovalTracker';
 
 type LineItem = {
   label?: string;
@@ -25,15 +27,6 @@ function parseLineItems(input: unknown) {
     .filter((item): item is { label: string; amount: string } => Boolean(item));
 }
 
-function formatCurrency(value: number | null | undefined) {
-  if (typeof value !== 'number') return 'Not set';
-  return new Intl.NumberFormat('en-ZA', {
-    style: 'currency',
-    currency: 'ZAR',
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
 export const dynamic = 'force-dynamic';
 
 export default async function PortalQuoteDetailPage({ params }: { params: { id: string } }) {
@@ -47,10 +40,17 @@ export default async function PortalQuoteDetailPage({ params }: { params: { id: 
       leadId: session.leadId,
       deletedAt: null,
     },
-    include: {
-      convertedProject: {
-        select: {
-          id: true,
+      include: {
+        clientRespondedByClientUser: {
+          select: {
+            id: true,
+            fullName: true,
+            displayName: true,
+          },
+        },
+        convertedProject: {
+          select: {
+            id: true,
           title: true,
           status: true,
           projectCode: true,
@@ -75,9 +75,16 @@ export default async function PortalQuoteDetailPage({ params }: { params: { id: 
   const validUntil = quote.quoteSentAt
     ? new Date(quote.quoteSentAt.getTime() + (quote.validityDays || 14) * 24 * 60 * 60 * 1000)
     : null;
+  const approvalStatus = deriveQuoteApprovalStatus({
+    approvalStatus: quote.approvalStatus,
+    quoteSentAt: quote.quoteSentAt,
+    validityDays: quote.validityDays,
+  });
+  const canRespond = approvalStatus === 'SENT' || approvalStatus === 'VIEWED';
 
   return (
     <section className="space-y-6">
+      <PortalApprovalTracker endpoint={`/api/portal/quotes/${quote.id}/approval`} returnTo={`/portal/quotes/${quote.id}`} />
       <article className="rounded-[2rem] border border-white/10 bg-slate-950/85 p-8 shadow-glow">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -85,9 +92,14 @@ export default async function PortalQuoteDetailPage({ params }: { params: { id: 
             <h1 className="mt-3 text-3xl font-semibold text-white">{quote.referenceCode}</h1>
             <p className="mt-2 text-sm text-slate-400">{quote.serviceType}</p>
           </div>
-          <span className="rounded-full border border-brand-cyan/35 bg-brand-cyan/10 px-4 py-2 text-xs uppercase tracking-[0.16em] text-brand-cyan">
-            {quote.status}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full border border-brand-cyan/35 bg-brand-cyan/10 px-4 py-2 text-xs uppercase tracking-[0.16em] text-brand-cyan">
+              {approvalStatus.replace('_', ' ')}
+            </span>
+            <span className="rounded-full border border-slate-700/70 bg-slate-900/80 px-4 py-2 text-xs uppercase tracking-[0.16em] text-slate-300">
+              Internal: {quote.status.replace('_', ' ')}
+            </span>
+          </div>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -102,6 +114,27 @@ export default async function PortalQuoteDetailPage({ params }: { params: { id: 
               Open linked project
             </Link>
           ) : null}
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <article className="interactive-card rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Viewed</p>
+            <p className="mt-2 text-sm font-semibold text-white">{quote.clientViewedAt ? new Date(quote.clientViewedAt).toLocaleString() : 'Not yet viewed'}</p>
+          </article>
+          <article className="interactive-card rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Responded</p>
+            <p className="mt-2 text-sm font-semibold text-white">{quote.clientRespondedAt ? new Date(quote.clientRespondedAt).toLocaleString() : 'Awaiting response'}</p>
+          </article>
+          <article className="interactive-card rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Response by</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {quote.clientRespondedByClientUser ? (
+                quote.clientRespondedByClientUser.displayName || quote.clientRespondedByClientUser.fullName
+              ) : (
+                'N/A'
+              )}
+            </p>
+          </article>
         </div>
       </article>
 
@@ -192,6 +225,13 @@ export default async function PortalQuoteDetailPage({ params }: { params: { id: 
             </div>
           </article>
 
+          {quote.clientResponseNote ? (
+            <article className="rounded-[2rem] border border-emerald-300/25 bg-emerald-400/10 p-6 text-sm text-emerald-100">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100/80">Client note</p>
+              <p className="mt-2 whitespace-pre-line">{quote.clientResponseNote}</p>
+            </article>
+          ) : null}
+
           {linkedProject ? (
             <article className="rounded-[2rem] border border-emerald-300/30 bg-emerald-400/10 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100">Linked project</p>
@@ -202,6 +242,44 @@ export default async function PortalQuoteDetailPage({ params }: { params: { id: 
               </Link>
             </article>
           ) : null}
+
+          {canRespond ? (
+            <article className="rounded-[2rem] border border-brand-cyan/30 bg-brand-cyan/10 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-cyan">Quote approval</p>
+              <h2 className="mt-2 text-xl font-semibold text-white">Accept or decline this quotation</h2>
+              <p className="mt-2 text-sm text-slate-300">
+                Your response is recorded securely and shared with the team so the next billing or project step can move forward.
+              </p>
+              <form action={`/api/portal/quotes/${quote.id}/approval`} method="post" className="mt-4 space-y-4">
+                <input type="hidden" name="returnTo" value={`/portal/quotes/${quote.id}`} />
+                <label className="block">
+                  <span className="text-sm font-semibold text-white">Note for the team (optional)</span>
+                  <textarea name="clientResponseNote" rows={4} className="interactive-input mt-3" placeholder="Add a question, approval note, or request for follow-up." />
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button type="submit" name="approvalStatus" value="ACCEPTED" className="btn-primary px-5 py-2 text-xs uppercase tracking-[0.16em]">
+                    Accept quote
+                  </button>
+                  <button type="submit" name="approvalStatus" value="DECLINED" className="btn-ghost px-5 py-2 text-xs uppercase tracking-[0.16em]">
+                    Decline quote
+                  </button>
+                </div>
+              </form>
+            </article>
+          ) : (
+            <article className="rounded-[2rem] border border-slate-800/70 bg-slate-950/75 p-6 text-sm text-slate-300 shadow-glow">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Quote approval</p>
+              <p className="mt-2">
+                {approvalStatus === 'ACCEPTED'
+                  ? 'This quotation has been accepted and is now awaiting the next commercial step.'
+                  : approvalStatus === 'DECLINED'
+                    ? 'This quotation was declined.'
+                    : approvalStatus === 'EXPIRED'
+                      ? 'This quotation has expired. Please contact the team if you would like an updated version.'
+                      : 'Approval actions are not currently available for this quotation.'}
+              </p>
+            </article>
+          )}
 
           <PortalContactActions title="Need clarification on this quote?" />
         </div>
