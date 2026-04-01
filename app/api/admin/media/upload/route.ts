@@ -5,6 +5,7 @@ import { prisma } from '../../../../../lib/prisma';
 import {
   assertSameOrigin,
   getRequestId,
+  getUnexpectedKeys,
   isRequestBodyWithinLimit,
   jsonError,
   jsonSuccess,
@@ -43,6 +44,22 @@ export async function POST(request: Request) {
 
   const formData = await request.formData().catch(() => null);
   if (!formData) return jsonError('Unable to parse upload payload.', 400, undefined, { requestId });
+
+  const uploadPayload = Object.fromEntries(
+    Array.from(new Set(Array.from(formData.keys()))).map((key) => [key, true]),
+  );
+  const unexpectedKeys = getUnexpectedKeys(uploadPayload, ['kind', 'altText', 'description', 'file']);
+  if (unexpectedKeys.length) {
+    return jsonError(
+      'Validation failed.',
+      422,
+      {
+        formErrors: [`Unexpected fields: ${unexpectedKeys.join(', ')}`],
+        fieldErrors: {},
+      },
+      { requestId },
+    );
+  }
 
   const kind = normalizeUploadKind(formData.get('kind'));
   const altText = sanitizeText(formData.get('altText'), 220) || null;

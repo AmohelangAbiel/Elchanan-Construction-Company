@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requirePortalSession } from '../../../../../lib/portal-auth';
+import { formatCurrency, getOutstandingBalance } from '../../../../../lib/billing';
 import { getMilestoneProgress, getProjectReference } from '../../../../../lib/portal';
 import { prisma } from '../../../../../lib/prisma';
 import { PortalContactActions } from '../../components/PortalContactActions';
@@ -64,6 +65,19 @@ export default async function PortalProjectDetailPage({ params }: PageProps) {
         orderBy: [{ publishedAt: 'desc' }],
         take: 8,
       },
+      invoices: {
+        where: {
+          deletedAt: null,
+          clientVisible: true,
+        },
+        orderBy: [{ issuedAt: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          payments: {
+            where: { deletedAt: null },
+            select: { amount: true },
+          },
+        },
+      },
       portalDocuments: {
         where: {
           deletedAt: null,
@@ -96,6 +110,26 @@ export default async function PortalProjectDetailPage({ params }: PageProps) {
     projectCode: project.projectCode,
     quoteRequest: linkedQuote ? { referenceCode: linkedQuote.referenceCode } : null,
   });
+  const invoiceSummary = project.invoices.reduce(
+    (summary, invoice) => {
+      const total = Number(invoice.total || invoice.subtotal || 0);
+      const paidTotal = invoice.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+
+      return {
+        visibleInvoices: summary.visibleInvoices + 1,
+        totalBilled: summary.totalBilled + total,
+        totalPaid: summary.totalPaid + paidTotal,
+        outstanding: summary.outstanding + getOutstandingBalance({ total, paidTotal }),
+      };
+    },
+    {
+      visibleInvoices: 0,
+      totalBilled: 0,
+      totalPaid: 0,
+      outstanding: 0,
+    },
+  );
+  const latestUpdate = project.updates[0] || null;
 
   return (
     <section className="space-y-6">
@@ -122,6 +156,30 @@ export default async function PortalProjectDetailPage({ params }: PageProps) {
           ) : null}
         </div>
       </article>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        <article className="interactive-card rounded-2xl p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Milestone progress</p>
+          <p className="mt-2 text-3xl font-semibold text-white">{progress.percentage}%</p>
+          <p className="mt-2 text-sm text-slate-400">{progress.completed}/{progress.total} milestones completed</p>
+        </article>
+        <article className="interactive-card rounded-2xl p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Billing snapshot</p>
+          <p className="mt-2 text-3xl font-semibold text-white">{formatCurrency(invoiceSummary.totalPaid)}</p>
+          <p className="mt-2 text-sm text-slate-400">
+            {invoiceSummary.visibleInvoices} invoices · Outstanding {formatCurrency(invoiceSummary.outstanding)}
+          </p>
+        </article>
+        <article className="interactive-card rounded-2xl p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Latest update</p>
+          <p className="mt-2 text-sm font-semibold text-white">
+            {latestUpdate ? latestUpdate.title : 'No published updates yet'}
+          </p>
+          <p className="mt-2 text-sm text-slate-400">
+            {latestUpdate ? new Date(latestUpdate.publishedAt).toLocaleString() : 'Your team will publish updates here as work progresses.'}
+          </p>
+        </article>
+      </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">

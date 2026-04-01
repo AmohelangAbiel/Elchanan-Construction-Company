@@ -9,1517 +9,366 @@ const ADMIN_NAME = process.env.SEED_ADMIN_NAME || 'Elchanan Admin';
 const PORTAL_EMAIL = process.env.SEED_PORTAL_EMAIL || 'client@elchananconstruction.co.za';
 const PORTAL_PASSWORD = process.env.SEED_PORTAL_PASSWORD || 'ChangeMe_Elchanan_Client_2026!';
 const PORTAL_NAME = process.env.SEED_PORTAL_NAME || 'Portal Client';
+const SECONDARY_PORTAL_EMAIL =
+  process.env.E2E_PORTAL_SECONDARY_EMAIL || 'client2@elchananconstruction.co.za';
+const SECONDARY_PORTAL_PASSWORD =
+  process.env.E2E_PORTAL_SECONDARY_PASSWORD || 'ChangeMe_Elchanan_Client_Secondary_2026!';
+
+const shouldResetDemoData =
+  process.env.SEED_RESET_DEMO_DATA === 'true' ||
+  (process.env.SEED_RESET_DEMO_DATA !== 'false' && process.env.NODE_ENV !== 'production');
+
+const BRAND_IMAGES = {
+  hero: '/images/construction/crane-commercial-site.jpg',
+  residentialShell: '/images/construction/residential-build-shell.jpg',
+  residentialHome: '/images/construction/residential-completed-home.jpg',
+  renovationKitchen: '/images/construction/renovation-kitchen.jpg',
+  commercialInterior: '/images/construction/commercial-interior.jpg',
+  brickwork: '/images/construction/brickwork-site.jpg',
+  blueprint: '/images/construction/blueprint-plans.jpg',
+  roofing: '/images/construction/roofing-team.jpg',
+  scaffold: '/images/construction/site-scaffold-team.jpg',
+  civil: '/images/construction/civil-excavator.jpg',
+};
 
 const STAFF_USERS = [
-  {
-    email: 'sales@elchananconstruction.co.za',
-    name: 'Sales Coordinator',
-    role: 'SALES',
-  },
-  {
-    email: 'content@elchananconstruction.co.za',
-    name: 'Content Manager',
-    role: 'CONTENT_MANAGER',
-  },
-  {
-    email: 'moderator@elchananconstruction.co.za',
-    name: 'Community Moderator',
-    role: 'MODERATOR',
-  },
+  { key: 'sales', email: 'sales@elchananconstruction.co.za', name: 'Sales Coordinator', role: 'SALES' },
+  { key: 'operations', email: 'operations@elchananconstruction.co.za', name: 'Operations Manager', role: 'ADMIN' },
+  { key: 'site', email: 'site@elchananconstruction.co.za', name: 'Site Supervisor', role: 'ADMIN' },
+  { key: 'accounts', email: 'accounts@elchananconstruction.co.za', name: 'Accounts Coordinator', role: 'ADMIN' },
+  { key: 'content', email: 'content@elchananconstruction.co.za', name: 'Content Manager', role: 'CONTENT_MANAGER' },
+  { key: 'moderator', email: 'moderator@elchananconstruction.co.za', name: 'Community Moderator', role: 'MODERATOR' },
 ];
 
-const serviceData = [
+const SERVICE_DATA = [
   {
+    id: 'demo-service-residential',
     title: 'Residential Construction',
     slug: 'residential-construction',
-    summary: 'Complete home builds designed for structural strength and modern living comfort.',
-    details: ['New home construction', 'Project planning and permits', 'Quality structural work'],
+    summary: 'Complete home builds designed for structural strength, clean sequencing, and premium finishes.',
+    details: ['New home construction', 'Structural shell delivery', 'Turnkey interior completion'],
     description:
-      'Full residential construction packages that include design coordination, trade management, and handover support for local homeowners.',
-    image: '/images/construction/residential-build-shell.jpg',
+      'End-to-end residential construction for homeowners who need disciplined planning, trade coordination, and quality finish control from foundation through handover.',
+    image: BRAND_IMAGES.residentialShell,
     seoTitle: 'Residential Construction in Rustenburg',
-    seoDescription: 'Premium residential building services in Rustenburg with transparent project planning.',
-    sortOrder: 1,
+    seoDescription: 'Premium residential building services in Rustenburg with transparent planning and delivery.',
     published: true,
+    sortOrder: 1,
   },
   {
+    id: 'demo-service-renovation',
     title: 'Renovations and Upgrades',
     slug: 'renovations-upgrades',
-    summary: 'High-impact renovation delivery for kitchens, bathrooms, and full living space upgrades.',
-    details: ['Kitchen and bathroom remodels', 'Home extensions', 'Interior and exterior upgrades'],
+    summary: 'High-impact renovation work for kitchens, bathrooms, extensions, and whole-home upgrades.',
+    details: ['Kitchen and bathroom upgrades', 'Extensions and reconfiguration', 'Finish and fit-out management'],
     description:
-      'Modern renovation services for kitchens, bathrooms, living spaces, and exteriors, with a focus on quality finishes and cost control.',
-    image: '/images/construction/renovation-kitchen.jpg',
+      'Renovation delivery with strong material planning, site coordination, and premium finish standards for residential and mixed-use properties.',
+    image: BRAND_IMAGES.renovationKitchen,
     seoTitle: 'Home Renovation Services in North West',
-    seoDescription: 'Professional renovation and home upgrade support from scope planning to final finish.',
-    sortOrder: 2,
+    seoDescription: 'Professional renovation support from scope definition through final handover.',
     published: true,
+    sortOrder: 2,
   },
   {
+    id: 'demo-service-brickwork',
     title: 'Paving and Brickwork',
     slug: 'paving-brickwork',
-    summary: 'Durable hardscape execution for driveways, walkways, boundary walls, and retaining structures.',
-    details: ['Driveways and walkways', 'Boundary walls', 'Retaining walls and hardscapes'],
+    summary: 'Durable hardscape and masonry packages for driveways, walls, walkways, and structural extras.',
+    details: ['Driveways and walkways', 'Boundary walls', 'Masonry and hardscape finishes'],
     description:
-      'Trusted paving and masonry projects built for long-term performance, attractive finishes, and practical drainage.',
-    image: '/images/construction/brickwork-site.jpg',
+      'Reliable paving and brickwork packages built for durability, clean presentation, and practical drainage performance.',
+    image: BRAND_IMAGES.brickwork,
     seoTitle: 'Paving and Brickwork Contractors Rustenburg',
-    seoDescription: 'Precision paving, masonry, and boundary wall construction for homes and commercial sites.',
-    sortOrder: 3,
+    seoDescription: 'Precision masonry, paving, and boundary wall construction for homes and commercial sites.',
     published: true,
+    sortOrder: 3,
+  },
+  {
+    id: 'demo-service-commercial',
+    title: 'Commercial Fit-out',
+    slug: 'commercial-fitout',
+    summary: 'Professional interior and customer-facing space delivery for working commercial environments.',
+    details: ['Medical and office interiors', 'Partitioning and finishes', 'Handover-ready defect clearance'],
+    description:
+      'Commercial fit-out execution for clinics, retail, and service spaces requiring clean finishes, reliable sequencing, and operational handover.',
+    image: BRAND_IMAGES.commercialInterior,
+    seoTitle: 'Commercial Fit-out Construction Services',
+    seoDescription: 'Construction and fit-out support for commercial interiors and customer-facing environments.',
+    published: true,
+    sortOrder: 4,
   },
 ];
 
-const projectData = [
+const PORTFOLIO_PROJECT_DATA = [
   {
+    id: 'demo-portfolio-residence',
     title: 'Rustenburg Family Residence',
     slug: 'rustenburg-family-residence',
     category: 'New Build',
-    summary: 'A modern family home delivered with planned sequencing and premium finishes.',
+    summary: 'A premium family home build delivered with disciplined sequencing and finish quality.',
     description:
-      'A full-scope residential construction project including foundation work, superstructure, roofing, and interior completion.',
-    image: '/images/construction/residential-completed-home.jpg',
-    galleryImages: [
-      '/images/construction/residential-completed-home.jpg',
-      '/images/construction/residential-build-shell.jpg',
-      '/images/construction/roofing-team.jpg',
-    ],
-    beforeImage: '/images/construction/residential-build-shell.jpg',
-    afterImage: '/images/construction/residential-completed-home.jpg',
-    beforeAfterCaption: 'Structural start phase compared with completed exterior delivery.',
+      'A full residential construction package covering foundations, structural shell, roofing, external works, and completion finishes.',
+    image: BRAND_IMAGES.residentialHome,
+    galleryImages: [BRAND_IMAGES.residentialHome, BRAND_IMAGES.residentialShell, BRAND_IMAGES.roofing],
+    beforeImage: BRAND_IMAGES.residentialShell,
+    afterImage: BRAND_IMAGES.residentialHome,
+    beforeAfterCaption: 'Structural shell versus completed exterior handover.',
     scopeNotes:
-      'Included structural shell, roofing, plastering, paint finish, and driveway hardscape package.',
+      'Included site mobilization, structural works, roof package, plastering, paint finish, and external paving.',
     location: 'Rustenburg, North West',
     seoTitle: 'Rustenburg Family Residence Project',
-    seoDescription: 'Case study of a premium residential build completed by Elchanan Construction Company.',
+    seoDescription: 'Case study of a premium residential home build delivered by Elchanan Construction Company.',
     status: 'PUBLISHED',
     published: true,
     sortOrder: 1,
   },
   {
-    title: 'Urban Renovation',
-    slug: 'urban-renovation',
+    id: 'demo-portfolio-renovation',
+    title: 'Urban Home Renovation',
+    slug: 'urban-home-renovation',
     category: 'Renovation',
-    summary: 'Interior and exterior upgrades for an aging residence requiring modern finishes.',
+    summary: 'An aging residence reworked into a brighter, better-planned living environment.',
     description:
-      'Comprehensive renovation scope covering kitchen upgrades, bathroom restoration, plastering, painting, and external improvements.',
-    image: '/images/construction/renovation-kitchen.jpg',
-    galleryImages: [
-      '/images/construction/renovation-kitchen.jpg',
-      '/images/construction/blueprint-plans.jpg',
-      '/images/construction/brickwork-site.jpg',
-    ],
-    beforeImage: '/images/construction/blueprint-plans.jpg',
-    afterImage: '/images/construction/renovation-kitchen.jpg',
-    beforeAfterCaption: 'Living area and exterior façade upgrades after renovation sequencing.',
+      'A focused renovation scope spanning kitchen upgrades, bathroom modernization, paintwork, and finish corrections.',
+    image: BRAND_IMAGES.renovationKitchen,
+    galleryImages: [BRAND_IMAGES.renovationKitchen, BRAND_IMAGES.blueprint, BRAND_IMAGES.brickwork],
+    beforeImage: BRAND_IMAGES.blueprint,
+    afterImage: BRAND_IMAGES.renovationKitchen,
+    beforeAfterCaption: 'Concept and planning stage compared with final kitchen handover.',
     scopeNotes:
-      'Renovation scope covered kitchen rebuild, bathroom upgrades, paint works, and ceiling correction.',
+      'Renovation scope covered cabinetry, tiling, ceiling correction, paintwork, and finish coordination.',
     location: 'Rustenburg, North West',
     seoTitle: 'Urban Home Renovation Project',
-    seoDescription: 'A full renovation delivery with strong timeline discipline and quality control.',
+    seoDescription: 'A renovation delivery case study with tight coordination and finish-led execution.',
     status: 'PUBLISHED',
     published: true,
     sortOrder: 2,
   },
   {
-    title: 'Commercial Fitout',
-    slug: 'commercial-fitout',
-    category: 'Commercial Fitout',
-    summary: 'Customer-facing fitout delivered for a functional and durable business environment.',
+    id: 'demo-portfolio-commercial',
+    title: 'Medical Practice Fit-out',
+    slug: 'medical-practice-fitout',
+    category: 'Commercial Fit-out',
+    summary: 'A healthcare interior upgrade delivered for a cleaner client journey and durable finish quality.',
     description:
-      'Commercial finishing and installation package with practical sequencing, quality materials, and reliable handover timelines.',
-    image: '/images/construction/commercial-interior.jpg',
-    galleryImages: [
-      '/images/construction/commercial-interior.jpg',
-      '/images/construction/crane-commercial-site.jpg',
-      '/images/construction/site-scaffold-team.jpg',
-    ],
+      'Commercial fit-out package including partitions, flooring, lighting coordination, joinery integration, and snag clearance.',
+    image: BRAND_IMAGES.commercialInterior,
+    galleryImages: [BRAND_IMAGES.commercialInterior, BRAND_IMAGES.scaffold, BRAND_IMAGES.hero],
     scopeNotes:
-      'Included partitioning, flooring finish, customer circulation planning, and final handover snag list clearance.',
+      'Included consultation rooms, reception reconfiguration, paint package, and final handover support.',
     location: 'Rustenburg CBD',
-    seoTitle: 'Commercial Fitout Construction Project',
-    seoDescription: 'Construction and fitout case study for a local retail and customer service site.',
+    seoTitle: 'Medical Practice Fit-out Project',
+    seoDescription: 'Commercial upgrade case study for a healthcare environment delivered by Elchanan Construction Company.',
     status: 'PUBLISHED',
     published: true,
     sortOrder: 3,
   },
 ];
 
-const pricingPlanData = [
+const PRICING_PLAN_DATA = [
   {
+    id: 'demo-plan-consultation',
     title: 'Essential Consultation',
     slug: 'essential-consultation',
     range: 'R5,000 - R12,000',
-    summary: 'Initial site review and project scoping package for confident decision-making.',
+    summary: 'A clear starting point for scoping, site review, and budget direction.',
     description:
-      'Includes an on-site assessment, scope alignment, and a preliminary estimate framework for project planning.',
-    items: ['Site assessment', 'Concept planning', 'Preliminary quote guidance'],
+      'Includes site assessment, practical scope review, and early-stage estimate guidance for confident decision-making.',
+    items: ['Site assessment', 'Concept planning notes', 'Preliminary estimate direction'],
     seoTitle: 'Construction Consultation Pricing',
     seoDescription: 'Entry-level consultation package for scope definition and budget preparation.',
+    published: true,
+    sortOrder: 1,
+  },
+  {
+    id: 'demo-plan-renovation',
+    title: 'Renovation Starter',
+    slug: 'renovation-starter',
+    range: 'From R35,000',
+    summary: 'A structured package for kitchens, bathrooms, and targeted home upgrades.',
+    description:
+      'Renovation delivery with material guidance, site management, and quality-finish coordination for mid-scale upgrade work.',
+    items: ['Material direction', 'Construction coordination', 'Finish quality management'],
+    seoTitle: 'Renovation Starter Package',
+    seoDescription: 'Transparent starter package for homeowners planning medium-scale renovations.',
+    published: true,
+    sortOrder: 2,
+  },
+  {
+    id: 'demo-plan-build',
+    title: 'Residential Build',
+    slug: 'residential-build',
+    range: 'From R180,000',
+    summary: 'Turnkey planning and execution for full residential build delivery.',
+    description:
+      'Complete planning, structural execution, and finish delivery for homeowners building from the ground up.',
+    items: ['Full build planning', 'Structural execution', 'Interior completion'],
+    seoTitle: 'Residential Build Package',
+    seoDescription: 'Turnkey construction package for new residential development and major extensions.',
+    published: true,
+    sortOrder: 3,
+  },
+];
+
+const FORUM_CATEGORY_DATA = [
+  {
+    id: 'demo-forum-general',
+    name: 'General Advice',
+    slug: 'general-advice',
+    description: 'Planning, budgeting, and construction sequencing discussions.',
     sortOrder: 1,
     published: true,
   },
   {
-    title: 'Renovation Starter',
-    slug: 'renovation-starter',
-    range: 'From R35,000',
-    summary: 'Structured renovation support for kitchens, bathrooms, and targeted home upgrades.',
-    description:
-      'Guided renovation package covering material direction, build coordination, and quality finish execution.',
-    items: ['Design and material guidance', 'Construction management', 'Finish delivery'],
-    seoTitle: 'Renovation Starter Package',
-    seoDescription: 'Transparent starter package for homeowners planning medium-scale renovations.',
+    id: 'demo-forum-materials',
+    name: 'Materials and Finishes',
+    slug: 'materials-and-finishes',
+    description: 'Material choices, durability, cost control, and finish quality conversations.',
     sortOrder: 2,
     published: true,
   },
   {
-    title: 'Residential Build',
-    slug: 'residential-build',
-    range: 'From R180,000',
-    summary: 'End-to-end residential build support for new home development and major extensions.',
-    description:
-      'Complete planning, structural execution, and interior completion workflow for full residential construction delivery.',
-    items: ['Full build planning', 'Structural construction', 'Interior finishing'],
-    seoTitle: 'Residential Build Package',
-    seoDescription: 'Turnkey construction package for new residential build projects.',
+    id: 'demo-forum-commercial',
+    name: 'Commercial Projects',
+    slug: 'commercial-projects',
+    description: 'Fit-out, handover, and delivery management for commercial environments.',
     sortOrder: 3,
     published: true,
   },
 ];
 
-const reviewData = [
-  {
-    name: 'Lebogang M.',
-    email: 'lebogang.m@example.com',
-    rating: 5,
-    projectContext: 'Rustenburg home renovation',
-    title: 'Excellent communication and delivery',
-    message: 'The team kept me informed, stayed on schedule, and gave our home a quality finish on time.',
-    consentGiven: true,
-    status: 'APPROVED',
-    featured: true,
-  },
-  {
-    name: 'Thabo K.',
-    email: 'thabo.k@example.com',
-    rating: 5,
-    projectContext: 'Commercial fitout',
-    title: 'Professional service from start to finish',
-    message:
-      'A responsive contractor that delivered a strong finish for our retail space and helped us manage the budget effectively.',
-    consentGiven: true,
-    status: 'APPROVED',
-    featured: true,
-  },
-  {
-    name: 'Naledi P.',
-    email: 'naledi.p@example.com',
-    rating: 4,
-    projectContext: 'Boundary wall and paving',
-    title: 'Solid workmanship',
-    message: 'Good site coordination and clear feedback on material options throughout the job.',
-    consentGiven: true,
-    status: 'PENDING',
-    featured: false,
-  },
-];
+function at(value) {
+  return new Date(value);
+}
 
-async function upsertReferenceData() {
-  for (const service of serviceData) {
-    await prisma.service.upsert({
-      where: { slug: service.slug },
-      update: service,
-      create: service,
-    });
-  }
+function money(value) {
+  return Number(value).toFixed(2);
+}
 
-  for (const project of projectData) {
-    await prisma.project.upsert({
-      where: { slug: project.slug },
-      update: project,
-      create: project,
-    });
-  }
+function zarLabel(value) {
+  return new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
-  for (const plan of pricingPlanData) {
-    await prisma.pricingPlan.upsert({
-      where: { slug: plan.slug },
-      update: plan,
-      create: plan,
+async function upsertManyById(model, items) {
+  for (const item of items) {
+    await model.upsert({
+      where: { id: item.id },
+      update: item,
+      create: item,
     });
   }
 }
 
-async function seedReviews() {
-  for (const review of reviewData) {
-    const existing = await prisma.review.findFirst({
-      where: {
-        name: review.name,
-        title: review.title,
-        message: review.message,
-      },
-    });
-
-    if (!existing) {
-      await prisma.review.create({ data: review });
-    }
-  }
-}
-
-async function seedForum() {
-  const categories = [
-    {
-      name: 'General Advice',
-      slug: 'general-advice',
-      description: 'Planning, budgeting, and project coordination discussions.',
-      sortOrder: 1,
-      published: true,
-    },
-    {
-      name: 'Materials and Finishes',
-      slug: 'materials-and-finishes',
-      description: 'Discussion on durable materials, finishes, and cost-performance tradeoffs.',
-      sortOrder: 2,
-      published: true,
-    },
-    {
-      name: 'Commercial Projects',
-      slug: 'commercial-projects',
-      description: 'Fitout, scheduling, and delivery topics for business environments.',
-      sortOrder: 3,
-      published: true,
-    },
-  ];
-
-  for (const category of categories) {
-    await prisma.forumCategory.upsert({
-      where: { slug: category.slug },
-      update: category,
-      create: category,
-    });
-  }
-
-  const generalCategory = await prisma.forumCategory.findUnique({ where: { slug: 'general-advice' } });
-  const materialsCategory = await prisma.forumCategory.findUnique({ where: { slug: 'materials-and-finishes' } });
-
-  const threads = [
-    {
-      title: 'Planning budget tips for phased home renovations',
-      slug: 'planning-budget-tips',
-      content:
-        'What is the best way to phase a renovation so we keep living in the house while still controlling cost and build quality?',
-      excerpt: 'How to stage renovation phases while managing cost, quality, and timeline risk.',
-      authorName: 'Sophie van der Merwe',
-      authorEmail: 'sophie@example.com',
-      status: 'OPEN',
-      categoryId: generalCategory ? generalCategory.id : null,
-      publishedAt: new Date(),
-    },
-    {
-      title: 'Best exterior paint systems for North West weather',
-      slug: 'exterior-paint-north-west',
-      content:
-        'Looking for exterior paint recommendations that handle heat, storms, and long sun exposure without constant repainting.',
-      excerpt: 'Durable exterior paint recommendations for local climate conditions.',
-      authorName: 'Karabo M.',
-      authorEmail: 'karabo@example.com',
-      status: 'OPEN',
-      categoryId: materialsCategory ? materialsCategory.id : null,
-      publishedAt: new Date(),
-    },
-    {
-      title: 'How to prepare before requesting a commercial fitout quote',
-      slug: 'commercial-fitout-quote-prep',
-      content:
-        'What information should we prepare before requesting quotes for a retail fitout to avoid scope creep later?',
-      excerpt: 'Required information for faster and more accurate commercial quote responses.',
-      authorName: 'Andre J.',
-      authorEmail: 'andre@example.com',
-      status: 'PENDING',
-      categoryId: generalCategory ? generalCategory.id : null,
-      publishedAt: null,
-    },
-  ];
-
-  for (const thread of threads) {
-    await prisma.forumThread.upsert({
-      where: { slug: thread.slug },
-      update: thread,
-      create: thread,
-    });
-  }
-
-  const thread = await prisma.forumThread.findUnique({ where: { slug: 'planning-budget-tips' } });
-
-  if (thread) {
-    const replies = [
-      {
-        threadId: thread.id,
-        authorName: 'Local contractor',
-        authorEmail: 'advisor@example.com',
-        content:
-          'Start with structural and moisture issues first, then move to high-traffic areas and finish with decorative upgrades.',
-        status: 'APPROVED',
-      },
-      {
-        threadId: thread.id,
-        authorName: 'Project coordinator',
-        authorEmail: 'coordination@example.com',
-        content:
-          'Keep a 10-15% contingency and lock material specs early to avoid delays from supplier changes.',
-        status: 'APPROVED',
-      },
-    ];
-
-    for (const reply of replies) {
-      const exists = await prisma.forumReply.findFirst({
-        where: {
-          threadId: reply.threadId,
-          authorName: reply.authorName,
-          content: reply.content,
-        },
-      });
-
-      if (!exists) {
-        await prisma.forumReply.create({ data: reply });
-      }
-    }
-  }
-}
-
-async function seedLeads() {
-  const now = Date.now();
-  const enquirySamples = [
-    {
-      fullName: 'Nokuthula P.',
-      email: 'nokuthula@example.com',
-      phone: '082 555 1234',
-      subject: 'Site inspection for a home extension',
-      serviceInterest: 'Renovations and Upgrades',
-      preferredContactMethod: 'Phone',
-      location: 'Rustenburg, North West',
-      message: 'I need a quote for a kitchen and living room extension with improved insulation.',
-      consentGiven: true,
-      status: 'NEW',
-      sourceType: 'CONTACT_PAGE',
-      sourcePath: '/contact',
-      sourcePage: '/contact',
-      sourceReferrer: 'https://www.google.com',
-      utmSource: 'google',
-      utmMedium: 'organic',
-      utmCampaign: 'home-renovation-discovery',
-      createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
-    },
-    {
-      fullName: 'Mpho D.',
-      email: 'mpho.d@example.com',
-      phone: '083 202 1104',
-      subject: 'Boundary wall and paving quote',
-      serviceInterest: 'Paving and Brickwork',
-      preferredContactMethod: 'WhatsApp',
-      location: 'Mogwase',
-      message: 'Need driveway paving and a boundary wall for a corner stand.',
-      consentGiven: true,
-      status: 'IN_PROGRESS',
-      sourceType: 'SERVICE_PAGE',
-      sourcePath: '/services/paving-brickwork',
-      sourcePage: '/services/paving-brickwork',
-      sourceReferrer: 'https://elchananconstruction.co.za/services',
-      utmSource: 'facebook',
-      utmMedium: 'paid-social',
-      utmCampaign: 'hardscape-leads',
-      createdAt: new Date(now - 9 * 24 * 60 * 60 * 1000),
-    },
-    {
-      fullName: 'Johan V.',
-      email: 'johan.v@example.com',
-      phone: '072 449 8123',
-      subject: 'Commercial painting and plastering support',
-      serviceInterest: 'Plastering and Painting',
-      preferredContactMethod: 'Email',
-      location: 'Rustenburg CBD',
-      message: 'We need plaster repair and repainting before opening date.',
-      consentGiven: true,
-      status: 'RESOLVED',
-      sourceType: 'DIRECT',
-      sourcePath: '/contact',
-      sourcePage: '/contact',
-      sourceReferrer: '',
-      utmSource: '',
-      utmMedium: '',
-      utmCampaign: '',
-      createdAt: new Date(now - 21 * 24 * 60 * 60 * 1000),
-    },
-    {
-      fullName: 'Lerato N.',
-      email: 'lerato.n@example.com',
-      phone: '079 654 2201',
-      subject: 'Roofing replacement planning',
-      serviceInterest: 'Roofing and Ceilings',
-      preferredContactMethod: 'Phone',
-      location: 'Phokeng',
-      message: 'Looking for a full roof replacement before heavy rain season.',
-      consentGiven: true,
-      status: 'NEW',
-      sourceType: 'QUOTE_PAGE',
-      sourcePath: '/quote',
-      sourcePage: '/quote',
-      sourceReferrer: 'https://elchananconstruction.co.za/pricing',
-      utmSource: 'instagram',
-      utmMedium: 'social',
-      utmCampaign: 'roofing-awareness',
-      createdAt: new Date(now - 32 * 24 * 60 * 60 * 1000),
-    },
-  ];
-
-  for (const sample of enquirySamples) {
-    const exists = await prisma.contactEnquiry.findFirst({
-      where: {
-        email: sample.email,
-        subject: sample.subject,
-      },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      await prisma.contactEnquiry.create({ data: sample });
-    }
-  }
-
-  const quoteSamples = [
-    {
-      fullName: 'Jaco S.',
-      email: 'jaco@example.com',
-      phone: '083 444 5678',
-      serviceType: 'Roofing and Ceilings',
-      projectType: 'Maintenance',
-      location: 'Rustenburg',
-      estimatedBudgetRange: 'R100,000 - R250,000',
-      preferredStartDate: new Date(),
-      siteVisitRequired: true,
-      projectDescription: 'Roof leak repairs and a complete roof replacement with new insulation.',
-      consentGiven: true,
-      status: 'REVIEWING',
-      sourceType: 'QUOTE_PAGE',
-      sourcePath: '/quote',
-      sourcePage: '/quote',
-      sourceReferrer: 'https://elchananconstruction.co.za/services/renovations-upgrades',
-      utmSource: 'google',
-      utmMedium: 'cpc',
-      utmCampaign: 'quote-request-roofing',
-      quoteSummary:
-        'Roof replacement and ceiling insulation package prepared after initial inspection findings.',
-      scopeNotes:
-        'Includes old roof removal, waterproofing membrane installation, and new insulation layer.',
-      lineItems: [
-        { label: 'Roof sheet replacement', amount: 'R78,000' },
-        { label: 'Waterproofing and sealing', amount: 'R14,500' },
-        { label: 'Ceiling insulation', amount: 'R22,000' },
-      ],
-      estimateSubtotal: '114500',
-      estimateTax: '17175',
-      estimateTotal: '131675',
-      validityDays: 14,
-      exclusions:
-        'Electrical rewiring and structural timber replacement not included unless defects are identified.',
-      assumptions:
-        'Quotation assumes clear roof access and no hidden structural defects during strip-down.',
-      termsDisclaimer:
-        'Final contract value is confirmed after site verification and client approval of final scope.',
-      createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000),
-    },
-    {
-      fullName: 'Palesa M.',
-      email: 'palesa.m@example.com',
-      phone: '084 110 0043',
-      serviceType: 'Residential Construction',
-      projectType: 'New Build',
-      location: 'Rustenburg North',
-      estimatedBudgetRange: 'R500,000+',
-      preferredStartDate: new Date(now + 30 * 24 * 60 * 60 * 1000),
-      siteVisitRequired: true,
-      projectDescription: 'Two-bedroom new build with open-plan kitchen and covered patio.',
-      consentGiven: true,
-      status: 'RESPONDED',
-      sourceType: 'PROJECT_PAGE',
-      sourcePath: '/projects/rustenburg-family-residence',
-      sourcePage: '/projects/rustenburg-family-residence',
-      sourceReferrer: 'https://elchananconstruction.co.za/projects',
-      utmSource: 'facebook',
-      utmMedium: 'paid-social',
-      utmCampaign: 'new-build-leads',
-      createdAt: new Date(now - 14 * 24 * 60 * 60 * 1000),
-    },
-    {
-      fullName: 'Sipho K.',
-      email: 'sipho.k@example.com',
-      phone: '081 400 2219',
-      serviceType: 'Commercial Fitout',
-      projectType: 'Commercial Fitout',
-      location: 'Rustenburg CBD',
-      estimatedBudgetRange: 'R250,000 - R500,000',
-      preferredStartDate: new Date(now + 15 * 24 * 60 * 60 * 1000),
-      siteVisitRequired: true,
-      projectDescription: 'Restaurant interior fitout including partitions and flooring.',
-      consentGiven: true,
-      status: 'WON',
-      sourceType: 'WHATSAPP',
-      sourcePath: '/contact',
-      sourcePage: '/contact',
-      sourceReferrer: 'https://wa.me/27747512226',
-      utmSource: 'whatsapp',
-      utmMedium: 'chat',
-      utmCampaign: 'quick-contact',
-      quoteSentAt: new Date(now - 4 * 24 * 60 * 60 * 1000),
-      createdAt: new Date(now - 18 * 24 * 60 * 60 * 1000),
-    },
-    {
-      fullName: 'Tshepo R.',
-      email: 'tshepo.r@example.com',
-      phone: '073 904 1182',
-      serviceType: 'Paving and Brickwork',
-      projectType: 'Extension',
-      location: 'Tlhabane',
-      estimatedBudgetRange: 'R50,000 - R100,000',
-      preferredStartDate: new Date(now + 12 * 24 * 60 * 60 * 1000),
-      siteVisitRequired: false,
-      projectDescription: 'Front yard paving replacement and walkway brickwork.',
-      consentGiven: true,
-      status: 'LOST',
-      sourceType: 'SERVICE_PAGE',
-      sourcePath: '/services/paving-brickwork',
-      sourcePage: '/services/paving-brickwork',
-      sourceReferrer: 'https://www.google.com',
-      utmSource: 'google',
-      utmMedium: 'organic',
-      utmCampaign: 'paving-service',
-      createdAt: new Date(now - 35 * 24 * 60 * 60 * 1000),
-    },
-  ];
-
-  for (const sample of quoteSamples) {
-    const exists = await prisma.quoteRequest.findFirst({
-      where: {
-        email: sample.email,
-        serviceType: sample.serviceType,
-        projectDescription: sample.projectDescription,
-      },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      await prisma.quoteRequest.create({ data: sample });
-    }
-  }
-}
-
-async function seedStaffUsers(password) {
-  const seeded = {};
-
-  for (const user of STAFF_USERS) {
-    const staff = await prisma.adminUser.upsert({
-      where: { email: user.email },
-      update: {
-        password,
-        name: user.name,
-        role: user.role,
-        isActive: true,
-      },
-      create: {
-        email: user.email,
-        password,
-        name: user.name,
-        role: user.role,
-        isActive: true,
-      },
-    });
-
-    seeded[user.role] = staff.id;
-  }
-
-  return seeded;
-}
-
-async function seedMediaAssets(adminUserId) {
-  const assets = [
-    {
-      name: 'Project Cover 1',
-      url: '/images/construction/residential-completed-home.jpg',
-      type: 'project',
-      mimeType: 'image/jpeg',
-      altText: 'Completed residential project exterior photo',
-      storagePath: 'uploads/project/residential-completed-home.jpg',
-      bytes: 396336,
-      uploadedByAdminId: adminUserId,
-    },
-    {
-      name: 'Service Visual 1',
-      url: '/images/construction/renovation-kitchen.jpg',
-      type: 'service',
-      mimeType: 'image/jpeg',
-      altText: 'Renovated kitchen service photo',
-      storagePath: 'uploads/service/renovation-kitchen.jpg',
-      bytes: 294452,
-      uploadedByAdminId: adminUserId,
-    },
-    {
-      name: 'Quote Attachment Sample',
-      url: '/images/construction/commercial-interior.jpg',
-      type: 'quote',
-      mimeType: 'image/jpeg',
-      altText: 'Commercial interior project visual',
-      storagePath: 'uploads/quote/commercial-interior.jpg',
-      bytes: 251878,
-      uploadedByAdminId: adminUserId,
-    },
-  ];
-
-  for (const asset of assets) {
-    const exists = await prisma.mediaAsset.findFirst({
-      where: { url: asset.url, type: asset.type },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      await prisma.mediaAsset.create({
-        data: asset,
-      });
-    }
-  }
-}
-
-async function seedCommunicationLogs() {
-  const enquiry = await prisma.contactEnquiry.findFirst({
-    where: { email: 'nokuthula@example.com' },
-    select: { id: true },
-  });
-
-  const quote = await prisma.quoteRequest.findFirst({
-    where: { email: 'jaco@example.com' },
-    select: { id: true },
-  });
-
-  if (enquiry) {
-    const exists = await prisma.communicationLog.findFirst({
-      where: {
-        enquiryId: enquiry.id,
-        subject: 'Initial outbound acknowledgement',
-      },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      await prisma.communicationLog.create({
-        data: {
-          enquiryId: enquiry.id,
-          channel: 'EMAIL',
-          direction: 'OUTBOUND',
-          subject: 'Initial outbound acknowledgement',
-          message: 'Client received acknowledgement with reference code and follow-up expectations.',
-          actorName: 'System',
-          actorEmail: 'hello@elchananconstruction.co.za',
-        },
-      });
-    }
-  }
-
-  if (quote) {
-    const exists = await prisma.communicationLog.findFirst({
-      where: {
-        quoteRequestId: quote.id,
-        subject: 'Estimator review started',
-      },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      await prisma.communicationLog.create({
-        data: {
-          quoteRequestId: quote.id,
-          channel: 'NOTE',
-          direction: 'INTERNAL',
-          subject: 'Estimator review started',
-          message: 'Scope reviewed and preliminary line-item breakdown drafted for client-ready quotation output.',
-          actorName: 'Estimator Team',
-          actorEmail: 'hello@elchananconstruction.co.za',
-        },
-      });
-    }
-  }
-}
-
-function mergeLeadStatus(current, incoming) {
-  const rank = {
-    NEW: 1,
-    CONTACTED: 2,
-    QUALIFIED: 3,
-    QUOTED: 4,
-    WON: 5,
-    LOST: 0,
-    INACTIVE: -1,
-  };
-
-  if (!current) return incoming;
-  if (current === 'WON') return current;
-  if (incoming === 'WON') return 'WON';
-  if (current === 'LOST' && incoming !== 'WON') return current;
-  if (incoming === 'LOST' && current !== 'WON') return 'LOST';
-  return rank[incoming] > rank[current] ? incoming : current;
-}
-
-function mapEnquiryToLeadStatus(status) {
-  if (status === 'NEW') return 'NEW';
-  if (status === 'IN_PROGRESS') return 'CONTACTED';
-  if (status === 'RESOLVED') return 'QUALIFIED';
-  return 'INACTIVE';
-}
-
-function mapQuoteToLeadStatus(status) {
-  if (status === 'WON') return 'WON';
-  if (status === 'LOST') return 'LOST';
-  if (status === 'NEW' || status === 'REVIEWING' || status === 'RESPONDED') return 'QUOTED';
-  return 'INACTIVE';
-}
-
-async function seedCrmWorkflow(defaultAssigneeId, staffUsers) {
-  const salesAssigneeId = staffUsers.SALES || defaultAssigneeId;
-  const moderatorAssigneeId = staffUsers.MODERATOR || defaultAssigneeId;
-  const contentAssigneeId = staffUsers.CONTENT_MANAGER || defaultAssigneeId;
-
-  const enquiries = await prisma.contactEnquiry.findMany({
-    where: { deletedAt: null },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  for (const enquiry of enquiries) {
-    const incomingStatus = mapEnquiryToLeadStatus(enquiry.status);
-    const existingLead = await prisma.lead.findUnique({
-      where: {
-        email_phone: {
-          email: enquiry.email,
-          phone: enquiry.phone,
-        },
-      },
-      select: {
-        id: true,
-        status: true,
-        assignedToAdminId: true,
-      },
-    });
-
-    const nextStatus = mergeLeadStatus(existingLead?.status, incomingStatus);
-    const assignedToAdminId = existingLead?.assignedToAdminId || enquiry.assignedToAdminId || salesAssigneeId;
-
-    const lead = await prisma.lead.upsert({
-      where: {
-        email_phone: {
-          email: enquiry.email,
-          phone: enquiry.phone,
-        },
-      },
-      update: {
-        fullName: enquiry.fullName,
-        location: enquiry.location || null,
-        notes: enquiry.message || null,
-        status: nextStatus,
-        sourceType: enquiry.sourceType,
-        sourcePath: enquiry.sourcePath || null,
-        sourcePage: enquiry.sourcePage || null,
-        sourceReferrer: enquiry.sourceReferrer || null,
-        utmSource: enquiry.utmSource || null,
-        utmMedium: enquiry.utmMedium || null,
-        utmCampaign: enquiry.utmCampaign || null,
-        assignedToAdminId,
-      },
-      create: {
-        fullName: enquiry.fullName,
-        email: enquiry.email,
-        phone: enquiry.phone,
-        location: enquiry.location || null,
-        notes: enquiry.message || null,
-        status: nextStatus,
-        sourceType: enquiry.sourceType,
-        sourcePath: enquiry.sourcePath || null,
-        sourcePage: enquiry.sourcePage || null,
-        sourceReferrer: enquiry.sourceReferrer || null,
-        utmSource: enquiry.utmSource || null,
-        utmMedium: enquiry.utmMedium || null,
-        utmCampaign: enquiry.utmCampaign || null,
-        assignedToAdminId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    await prisma.contactEnquiry.update({
-      where: { id: enquiry.id },
-      data: {
-        leadId: lead.id,
-        assignedToAdminId: enquiry.assignedToAdminId || salesAssigneeId,
-      },
-    });
-
-    const hasActivity = await prisma.activityLog.findFirst({
-      where: {
-        type: 'ENQUIRY_SUBMITTED',
-        enquiryId: enquiry.id,
-      },
-      select: { id: true },
-    });
-
-    if (!hasActivity) {
-      await prisma.activityLog.create({
-        data: {
-          type: 'ENQUIRY_SUBMITTED',
-          title: 'Enquiry submitted',
-          description: `Seeded enquiry ${enquiry.referenceCode} imported into CRM timeline.`,
-          leadId: lead.id,
-          enquiryId: enquiry.id,
-          actorAdminId: defaultAssigneeId,
-        },
-      });
-    }
-  }
-
-  const quotes = await prisma.quoteRequest.findMany({
-    where: { deletedAt: null },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  for (const quote of quotes) {
-    const incomingStatus = mapQuoteToLeadStatus(quote.status);
-    const existingLead = await prisma.lead.findUnique({
-      where: {
-        email_phone: {
-          email: quote.email,
-          phone: quote.phone,
-        },
-      },
-      select: {
-        id: true,
-        status: true,
-        assignedToAdminId: true,
-      },
-    });
-
-    const nextStatus = mergeLeadStatus(existingLead?.status, incomingStatus);
-    const assignedToAdminId = existingLead?.assignedToAdminId || quote.assignedToAdminId || salesAssigneeId;
-
-    const lead = await prisma.lead.upsert({
-      where: {
-        email_phone: {
-          email: quote.email,
-          phone: quote.phone,
-        },
-      },
-      update: {
-        fullName: quote.fullName,
-        location: quote.location || null,
-        notes: quote.projectDescription || null,
-        status: nextStatus,
-        sourceType: quote.sourceType,
-        sourcePath: quote.sourcePath || null,
-        sourcePage: quote.sourcePage || null,
-        sourceReferrer: quote.sourceReferrer || null,
-        utmSource: quote.utmSource || null,
-        utmMedium: quote.utmMedium || null,
-        utmCampaign: quote.utmCampaign || null,
-        assignedToAdminId,
-      },
-      create: {
-        fullName: quote.fullName,
-        email: quote.email,
-        phone: quote.phone,
-        location: quote.location || null,
-        notes: quote.projectDescription || null,
-        status: nextStatus,
-        sourceType: quote.sourceType,
-        sourcePath: quote.sourcePath || null,
-        sourcePage: quote.sourcePage || null,
-        sourceReferrer: quote.sourceReferrer || null,
-        utmSource: quote.utmSource || null,
-        utmMedium: quote.utmMedium || null,
-        utmCampaign: quote.utmCampaign || null,
-        assignedToAdminId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const quoteAssignee = quote.assignedToAdminId || salesAssigneeId;
-    await prisma.quoteRequest.update({
-      where: { id: quote.id },
-      data: {
-        leadId: lead.id,
-        assignedToAdminId: quoteAssignee,
-      },
-    });
-
-    const hasActivity = await prisma.activityLog.findFirst({
-      where: {
-        type: 'QUOTE_REQUESTED',
-        quoteRequestId: quote.id,
-      },
-      select: { id: true },
-    });
-
-    if (!hasActivity) {
-      await prisma.activityLog.create({
-        data: {
-          type: 'QUOTE_REQUESTED',
-          title: 'Quote request submitted',
-          description: `Seeded quote ${quote.referenceCode} imported into CRM timeline.`,
-          leadId: lead.id,
-          quoteRequestId: quote.id,
-          actorAdminId: defaultAssigneeId,
-        },
-      });
-    }
-
-    if (quote.status === 'WON') {
-      await prisma.deliveryProject.upsert({
-        where: { quoteRequestId: quote.id },
-        update: {
-          title: `${quote.serviceType} - ${quote.fullName}`,
-          status: 'PLANNED',
-          leadId: lead.id,
-          createdByAdminId: quoteAssignee,
-          notes: 'Seeded delivery project from won quote.',
-        },
-        create: {
-          quoteRequestId: quote.id,
-          title: `${quote.serviceType} - ${quote.fullName}`,
-          status: 'PLANNED',
-          leadId: lead.id,
-          createdByAdminId: quoteAssignee,
-          notes: 'Seeded delivery project from won quote.',
-        },
-      });
-    }
-  }
-
-  const leadForTask = await prisma.lead.findFirst({
-    where: { deletedAt: null },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true },
-  });
-
-  const enquiryForTask = await prisma.contactEnquiry.findFirst({
-    where: { deletedAt: null, status: { in: ['NEW', 'IN_PROGRESS'] } },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true, leadId: true },
-  });
-
-  const quoteForTask = await prisma.quoteRequest.findFirst({
-    where: { deletedAt: null, status: { in: ['NEW', 'REVIEWING', 'RESPONDED'] } },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true, leadId: true },
-  });
-
-  const taskSamples = [
-    {
-      title: 'Call new lead within 24 hours',
-      description: 'Initial qualification call for newly captured lead.',
-      status: 'OPEN',
-      priority: 'HIGH',
-      dueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      assignedToAdminId: salesAssigneeId,
-      leadId: leadForTask?.id || enquiryForTask?.leadId || quoteForTask?.leadId || null,
-      enquiryId: enquiryForTask?.id || null,
-      quoteRequestId: null,
-      deliveryProjectId: null,
-      createdByAdminId: defaultAssigneeId,
-    },
-    {
-      title: 'Prepare estimate follow-up response',
-      description: 'Review latest quote details and schedule a follow-up response.',
-      status: 'IN_PROGRESS',
-      priority: 'MEDIUM',
-      dueAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      assignedToAdminId: salesAssigneeId,
-      leadId: quoteForTask?.leadId || null,
-      enquiryId: null,
-      quoteRequestId: quoteForTask?.id || null,
-      deliveryProjectId: null,
-      createdByAdminId: defaultAssigneeId,
-      startedAt: new Date(),
-    },
-    {
-      title: 'Moderation queue sweep',
-      description: 'Review pending testimonials and forum submissions.',
-      status: 'OPEN',
-      priority: 'LOW',
-      dueAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      assignedToAdminId: moderatorAssigneeId,
-      leadId: null,
-      enquiryId: null,
-      quoteRequestId: null,
-      deliveryProjectId: null,
-      createdByAdminId: contentAssigneeId,
-    },
-  ];
-
-  for (const task of taskSamples) {
-    const exists = await prisma.followUpTask.findFirst({
-      where: {
-        title: task.title,
-        leadId: task.leadId,
-        enquiryId: task.enquiryId,
-        quoteRequestId: task.quoteRequestId,
-        deletedAt: null,
-      },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      const createdTask = await prisma.followUpTask.create({
-        data: task,
-        select: {
-          id: true,
-          title: true,
-          leadId: true,
-          enquiryId: true,
-          quoteRequestId: true,
-          deliveryProjectId: true,
-        },
-      });
-
-      await prisma.activityLog.create({
-        data: {
-          type: 'TASK_CREATED',
-          title: 'Follow-up task created',
-          description: createdTask.title,
-          actorAdminId: defaultAssigneeId,
-          taskId: createdTask.id,
-          leadId: createdTask.leadId,
-          enquiryId: createdTask.enquiryId,
-          quoteRequestId: createdTask.quoteRequestId,
-          deliveryProjectId: createdTask.deliveryProjectId,
-        },
-      });
-    }
-  }
-}
-
-async function seedClientPortal(defaultAdminId) {
-  const leadWithClientHistory = await prisma.lead.findFirst({
-    where: {
-      deletedAt: null,
-      OR: [
-        {
-          quotes: {
-            some: {
-              deletedAt: null,
-            },
-          },
-        },
-        {
-          deliveryProjects: {
-            some: {
-              deletedAt: null,
-            },
-          },
-        },
-      ],
-    },
-    orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-    select: {
-      id: true,
-      fullName: true,
-      email: true,
-      phone: true,
-      companyName: true,
-      location: true,
-    },
-  });
-
-  const lead = leadWithClientHistory || await prisma.lead.findFirst({
-    where: { deletedAt: null },
-    orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-    select: {
-      id: true,
-      fullName: true,
-      email: true,
-      phone: true,
-      companyName: true,
-      location: true,
-    },
-  });
-
-  if (!lead) {
+async function resetDemoDatabase() {
+  if (!shouldResetDemoData) {
+    console.log('Skipping destructive demo reset because SEED_RESET_DEMO_DATA is disabled.');
     return;
   }
 
-  const clientPasswordHash = bcrypt.hashSync(PORTAL_PASSWORD, 10);
+  console.log('Resetting demo business data before reseeding...');
 
-  await prisma.clientUser.upsert({
-    where: { email: PORTAL_EMAIL },
+  await prisma.activityLog.deleteMany({});
+  await prisma.auditLog.deleteMany({});
+  await prisma.communicationLog.deleteMany({});
+  await prisma.followUpTask.deleteMany({});
+  await prisma.payment.deleteMany({});
+  await prisma.invoiceLineItem.deleteMany({});
+  await prisma.invoice.deleteMany({});
+  await prisma.portalDocument.deleteMany({});
+  await prisma.siteLog.deleteMany({});
+  await prisma.siteTask.deleteMany({});
+  await prisma.projectUpdate.deleteMany({});
+  await prisma.projectMilestone.deleteMany({});
+  await prisma.projectAssignment.deleteMany({});
+  await prisma.purchaseRequestLineItem.deleteMany({});
+  await prisma.purchaseRequest.deleteMany({});
+  await prisma.projectProcurementItem.deleteMany({});
+  await prisma.deliveryProject.deleteMany({});
+  await prisma.quoteRequest.deleteMany({});
+  await prisma.contactEnquiry.deleteMany({});
+  await prisma.clientUser.deleteMany({});
+  await prisma.lead.deleteMany({});
+  await prisma.review.deleteMany({});
+  await prisma.forumReply.deleteMany({});
+  await prisma.forumThread.deleteMany({});
+  await prisma.forumCategory.deleteMany({});
+  await prisma.mediaAsset.deleteMany({});
+  await prisma.newsletterSubscriber.deleteMany({});
+  await prisma.materialItem.deleteMany({});
+  await prisma.supplier.deleteMany({});
+  await prisma.project.deleteMany({});
+  await prisma.pricingPlan.deleteMany({});
+  await prisma.service.deleteMany({});
+  await prisma.companyProfile.deleteMany({});
+}
+
+async function seedAdminUsers() {
+  const adminPassword = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+  const admin = await prisma.adminUser.upsert({
+    where: { email: ADMIN_EMAIL },
     update: {
-      password: clientPasswordHash,
-      fullName: lead.fullName || PORTAL_NAME,
-      displayName: lead.fullName || PORTAL_NAME,
-      phone: lead.phone || null,
-      companyName: lead.companyName || null,
-      location: lead.location || null,
-      contactPreference: 'Email',
-      leadId: lead.id,
+      name: ADMIN_NAME,
+      password: adminPassword,
+      role: 'SUPER_ADMIN',
       isActive: true,
     },
     create: {
-      email: PORTAL_EMAIL,
-      password: clientPasswordHash,
-      fullName: lead.fullName || PORTAL_NAME,
-      displayName: lead.fullName || PORTAL_NAME,
-      phone: lead.phone || null,
-      companyName: lead.companyName || null,
-      location: lead.location || null,
-      contactPreference: 'Email',
-      leadId: lead.id,
+      email: ADMIN_EMAIL,
+      name: ADMIN_NAME,
+      password: adminPassword,
+      role: 'SUPER_ADMIN',
       isActive: true,
     },
   });
 
-  const quoteForPortal = await prisma.quoteRequest.findFirst({
-    where: {
-      deletedAt: null,
-      leadId: lead.id,
-    },
-    orderBy: [
-      { status: 'asc' },
-      { createdAt: 'desc' },
-    ],
-    select: {
-      id: true,
-      referenceCode: true,
-      serviceType: true,
-      status: true,
-      quoteSummary: true,
-      quoteSentAt: true,
-      projectDescription: true,
-    },
-  });
+  const staffIds = {};
 
-  const wonQuote = await prisma.quoteRequest.findFirst({
-    where: {
-      deletedAt: null,
-      leadId: lead.id,
-      status: 'WON',
-    },
-    orderBy: { createdAt: 'asc' },
-    select: {
-      id: true,
-      referenceCode: true,
-      serviceType: true,
-      projectDescription: true,
-    },
-  });
-
-  let deliveryProject = await prisma.deliveryProject.findFirst({
-    where: {
-      deletedAt: null,
-      leadId: lead.id,
-    },
-    orderBy: { createdAt: 'asc' },
-    select: {
-      id: true,
-      title: true,
-      quoteRequestId: true,
-      startTarget: true,
-      portalVisible: true,
-      projectCode: true,
-      estimatedCompletion: true,
-      notes: true,
-      clientSummary: true,
-    },
-  });
-
-  if (!deliveryProject && (wonQuote || quoteForPortal)) {
-    const sourceQuote = wonQuote || quoteForPortal;
-    const quoteAlreadyLinked = sourceQuote
-      ? await prisma.deliveryProject.findFirst({
-        where: {
-          quoteRequestId: sourceQuote.id,
-        },
-        select: {
-          id: true,
-        },
-      })
-      : null;
-
-    const created = await prisma.deliveryProject.create({
-      data: {
-        title: `${sourceQuote.serviceType} - ${lead.fullName}`,
-        status: wonQuote ? 'ACTIVE' : 'PLANNED',
-        leadId: lead.id,
-        quoteRequestId: quoteAlreadyLinked ? undefined : sourceQuote.id,
-        startTarget: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        estimatedCompletion: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
-        notes: 'Portal-seeded delivery project foundation from won quote workflow.',
-        clientSummary:
-          'Project is underway with staged progress updates and milestone tracking available in the portal.',
-        portalVisible: true,
-        createdByAdminId: defaultAdminId,
-      },
-      select: {
-        id: true,
-        title: true,
-        quoteRequestId: true,
-        startTarget: true,
-        portalVisible: true,
-        projectCode: true,
-        estimatedCompletion: true,
-        notes: true,
-        clientSummary: true,
-      },
-    });
-
-    deliveryProject = created;
-  }
-
-  if (deliveryProject) {
-    const generatedProjectCode = deliveryProject.projectCode || `PRJ-${deliveryProject.id.slice(-8).toUpperCase()}`;
-    const startBase = deliveryProject.startTarget || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const estimatedCompletion =
-      deliveryProject.estimatedCompletion || new Date(startBase.getTime() + 75 * 24 * 60 * 60 * 1000);
-
-    await prisma.deliveryProject.update({
-      where: { id: deliveryProject.id },
-      data: {
-        portalVisible: true,
-        projectCode: generatedProjectCode,
-        clientSummary:
-          deliveryProject.clientSummary ||
-          'Construction delivery is progressing with clear milestone tracking and regular client-facing updates.',
-        estimatedCompletion,
-      },
-    });
-
-    const milestoneSamples = [
-      {
-        title: 'Site mobilization and kickoff',
-        description: 'Site preparation, safety controls, and kickoff review completed.',
-        status: 'COMPLETED',
-        targetDate: new Date(startBase.getTime() - 1 * 24 * 60 * 60 * 1000),
-        completedDate: new Date(startBase.getTime() - 1 * 24 * 60 * 60 * 1000),
-        sortOrder: 1,
-        clientVisible: true,
-      },
-      {
-        title: 'Core structural works',
-        description: 'Main structural package in progress with weekly quality inspections.',
-        status: 'IN_PROGRESS',
-        targetDate: new Date(startBase.getTime() + 21 * 24 * 60 * 60 * 1000),
-        completedDate: null,
-        sortOrder: 2,
-        clientVisible: true,
-      },
-      {
-        title: 'Finishes and snagging',
-        description: 'Final finishes, quality checks, and handover readiness review.',
-        status: 'PENDING',
-        targetDate: new Date(startBase.getTime() + 55 * 24 * 60 * 60 * 1000),
-        completedDate: null,
-        sortOrder: 3,
-        clientVisible: true,
-      },
-    ];
-
-    for (const milestone of milestoneSamples) {
-      const exists = await prisma.projectMilestone.findFirst({
-        where: {
-          deliveryProjectId: deliveryProject.id,
-          title: milestone.title,
-          deletedAt: null,
-        },
-        select: { id: true },
-      });
-
-      if (!exists) {
-        await prisma.projectMilestone.create({
-          data: {
-            deliveryProjectId: deliveryProject.id,
-            ...milestone,
-          },
-        });
-      }
-    }
-
-    const updateSamples = [
-      {
-        title: 'Kickoff completed',
-        summary: 'Site team mobilized and baseline schedule confirmed.',
-        body: 'Kickoff meeting completed with site access confirmed, materials sequencing validated, and baseline timeline shared with the client.',
-        postedByLabel: 'Project Coordinator',
-        clientVisible: true,
-        publishedAt: new Date(startBase.getTime()),
-      },
-      {
-        title: 'Structural package progressing',
-        summary: 'Core structural works are currently on track.',
-        body: 'Primary structural works are progressing in line with the agreed sequence. Quality checks completed for this cycle with no major blockers raised.',
-        postedByLabel: 'Site Supervisor',
-        clientVisible: true,
-        imageUrl: '/images/construction/site-scaffold-team.jpg',
-        publishedAt: new Date(startBase.getTime() + 10 * 24 * 60 * 60 * 1000),
-      },
-      {
-        title: 'Upcoming phase planning',
-        summary: 'Preparation for finishes phase has started.',
-        body: 'Material selections and finishing phase planning are underway to keep the project aligned with the estimated completion timeline.',
-        postedByLabel: 'Project Coordinator',
-        clientVisible: true,
-        publishedAt: new Date(startBase.getTime() + 20 * 24 * 60 * 60 * 1000),
-      },
-    ];
-
-    for (const update of updateSamples) {
-      const exists = await prisma.projectUpdate.findFirst({
-        where: {
-          deliveryProjectId: deliveryProject.id,
-          title: update.title,
-          deletedAt: null,
-        },
-        select: { id: true },
-      });
-
-      if (!exists) {
-        await prisma.projectUpdate.create({
-          data: {
-            deliveryProjectId: deliveryProject.id,
-            postedByAdminId: defaultAdminId,
-            ...update,
-          },
-        });
-      }
-    }
-
-    const latestClientUpdate = await prisma.projectUpdate.findFirst({
-      where: {
-        deliveryProjectId: deliveryProject.id,
-        clientVisible: true,
-        deletedAt: null,
-      },
-      orderBy: { publishedAt: 'desc' },
-      select: { publishedAt: true },
-    });
-
-    if (latestClientUpdate) {
-      await prisma.deliveryProject.update({
-        where: { id: deliveryProject.id },
-        data: {
-          lastClientUpdateAt: latestClientUpdate.publishedAt,
-        },
-      });
-    }
-  }
-
-  if (quoteForPortal) {
-    await prisma.portalDocument.upsert({
-      where: {
-        id: `quote-doc-${quoteForPortal.id}`,
-      },
+  for (const staff of STAFF_USERS) {
+    const record = await prisma.adminUser.upsert({
+      where: { email: staff.email },
       update: {
-        title: `Quotation ${quoteForPortal.referenceCode}`,
-        description: 'Client-ready quotation document.',
-        type: 'QUOTE',
-        url: `/portal/quotes/${quoteForPortal.id}/document?print=1`,
-        fileName: `${quoteForPortal.referenceCode}.pdf`,
-        clientVisible: true,
-        leadId: lead.id,
-        quoteRequestId: quoteForPortal.id,
-        deliveryProjectId: deliveryProject ? deliveryProject.id : null,
-        uploadedByAdminId: defaultAdminId,
+        name: staff.name,
+        password: adminPassword,
+        role: staff.role,
+        isActive: true,
       },
       create: {
-        id: `quote-doc-${quoteForPortal.id}`,
-        title: `Quotation ${quoteForPortal.referenceCode}`,
-        description: 'Client-ready quotation document.',
-        type: 'QUOTE',
-        url: `/portal/quotes/${quoteForPortal.id}/document?print=1`,
-        fileName: `${quoteForPortal.referenceCode}.pdf`,
-        clientVisible: true,
-        leadId: lead.id,
-        quoteRequestId: quoteForPortal.id,
-        deliveryProjectId: deliveryProject ? deliveryProject.id : null,
-        uploadedByAdminId: defaultAdminId,
+        email: staff.email,
+        name: staff.name,
+        password: adminPassword,
+        role: staff.role,
+        isActive: true,
       },
     });
 
-    if (!quoteForPortal.quoteSummary) {
-      await prisma.quoteRequest.update({
-        where: { id: quoteForPortal.id },
-        data: {
-          quoteSummary:
-            quoteForPortal.projectDescription ||
-            'Quotation prepared based on current scope details and staged delivery planning.',
-          quoteSentAt: quoteForPortal.quoteSentAt || new Date(),
-        },
-      });
-    }
+    staffIds[staff.key] = record.id;
   }
 
-  if (deliveryProject) {
-    const projectDocSamples = [
-      {
-        id: `project-update-image-${deliveryProject.id}`,
-        title: 'Progress site image',
-        description: 'Latest approved site progress image for client reference.',
-        type: 'IMAGE',
-        url: '/images/construction/site-scaffold-team.jpg',
-        fileName: 'progress-site-image.jpg',
-      },
-      {
-        id: `project-scope-note-${deliveryProject.id}`,
-        title: 'Project scope summary',
-        description: 'Current scope summary for client communication.',
-        type: 'PROJECT',
-        url: '/images/construction/blueprint-plans.jpg',
-        fileName: 'project-scope-summary.jpg',
-      },
-    ];
-
-    for (const doc of projectDocSamples) {
-      await prisma.portalDocument.upsert({
-        where: { id: doc.id },
-        update: {
-          title: doc.title,
-          description: doc.description,
-          type: doc.type,
-          url: doc.url,
-          fileName: doc.fileName,
-          clientVisible: true,
-          leadId: lead.id,
-          deliveryProjectId: deliveryProject.id,
-          uploadedByAdminId: defaultAdminId,
-        },
-        create: {
-          id: doc.id,
-          title: doc.title,
-          description: doc.description,
-          type: doc.type,
-          url: doc.url,
-          fileName: doc.fileName,
-          clientVisible: true,
-          leadId: lead.id,
-          deliveryProjectId: deliveryProject.id,
-          uploadedByAdminId: defaultAdminId,
-        },
-      });
-    }
-  }
+  return {
+    adminId: admin.id,
+    staffIds,
+  };
 }
 
 async function seedCompanyProfile() {
   await prisma.companyProfile.upsert({
     where: { email: 'hello@elchananconstruction.co.za' },
     update: {
+      companyName: 'Elchanan Construction Company',
       displayName: 'Elchanan Construction',
-      tagline: 'Rustenburg modern construction partner for residential, renovation, and infrastructure projects.',
-      serviceAreas: ['Rustenburg', 'North West Province', 'Nearby regional developments'],
+      tagline: 'Premium construction delivery with disciplined planning and clear client visibility.',
+      description:
+        'Elchanan Construction Company delivers residential builds, renovations, and commercial fit-out work with strong project controls, clean communication, and premium finish standards.',
+      phone: '074 751 2226',
+      whatsapp: '+27747512226',
+      address: 'Rustenburg, North West Province, South Africa',
+      serviceAreas: ['Rustenburg', 'Waterfall East', 'Phokeng', 'North West Province'],
       serviceAreaText:
-        'Serving Rustenburg and surrounding service areas with dependable residential, renovation, and commercial project execution.',
+        'Serving Rustenburg and surrounding areas with dependable construction, renovation, and fit-out delivery.',
       socialLinks: {
         website: 'https://elchananconstruction.co.za',
         facebook: '',
@@ -1529,23 +378,37 @@ async function seedCompanyProfile() {
       quotationFooter:
         'Any services not listed in this quotation are excluded and will be priced separately if requested.',
       quotationDisclaimer:
-        'All quoted rates remain subject to final site verification, material confirmation, and signed agreement.',
+        'Quoted rates remain subject to final site verification, material confirmation, and signed agreement.',
       emailSignature: 'Regards,\nElchanan Construction Company Team',
-      emailFooter: 'Professional construction and renovation delivery in Rustenburg and surrounding areas.',
+      emailFooter: 'Professional construction delivery in Rustenburg and surrounding areas.',
+      heroHeadline: 'Build with confidence and visible project control.',
+      seoTitle: 'Elchanan Construction Company | Rustenburg Construction Experts',
+      seoDescription:
+        'Premium construction, renovation, and commercial fit-out services with a modern client portal and project controls.',
+      hours: [
+        { day: 'Mon', hours: '08:00 - 17:00' },
+        { day: 'Tue', hours: '08:00 - 17:00' },
+        { day: 'Wed', hours: '08:00 - 17:00' },
+        { day: 'Thu', hours: '08:00 - 17:00' },
+        { day: 'Fri', hours: '08:00 - 17:00' },
+        { day: 'Sat', hours: '09:00 - 13:00' },
+        { day: 'Sun', hours: 'Closed' },
+      ],
     },
     create: {
+      id: 'demo-company-profile',
       companyName: 'Elchanan Construction Company',
       displayName: 'Elchanan Construction',
-      tagline: 'Rustenburg modern construction partner for residential, renovation, and infrastructure projects.',
+      tagline: 'Premium construction delivery with disciplined planning and clear client visibility.',
       description:
-        'Elchanan Construction delivers premium build, renovation, and infrastructure services across Rustenburg and the North West province with trusted project planning and transparent quoting.',
+        'Elchanan Construction Company delivers residential builds, renovations, and commercial fit-out work with strong project controls, clean communication, and premium finish standards.',
       phone: '074 751 2226',
       email: 'hello@elchananconstruction.co.za',
       whatsapp: '+27747512226',
       address: 'Rustenburg, North West Province, South Africa',
-      serviceAreas: ['Rustenburg', 'North West Province', 'Nearby regional developments'],
+      serviceAreas: ['Rustenburg', 'Waterfall East', 'Phokeng', 'North West Province'],
       serviceAreaText:
-        'Serving Rustenburg and surrounding service areas with dependable residential, renovation, and commercial project execution.',
+        'Serving Rustenburg and surrounding areas with dependable construction, renovation, and fit-out delivery.',
       socialLinks: {
         website: 'https://elchananconstruction.co.za',
         facebook: '',
@@ -1555,19 +418,19 @@ async function seedCompanyProfile() {
       quotationFooter:
         'Any services not listed in this quotation are excluded and will be priced separately if requested.',
       quotationDisclaimer:
-        'All quoted rates remain subject to final site verification, material confirmation, and signed agreement.',
+        'Quoted rates remain subject to final site verification, material confirmation, and signed agreement.',
       emailSignature: 'Regards,\nElchanan Construction Company Team',
-      emailFooter: 'Professional construction and renovation delivery in Rustenburg and surrounding areas.',
-      heroHeadline: 'Build with confidence and timeline certainty.',
+      emailFooter: 'Professional construction delivery in Rustenburg and surrounding areas.',
+      heroHeadline: 'Build with confidence and visible project control.',
       seoTitle: 'Elchanan Construction Company | Rustenburg Construction Experts',
       seoDescription:
-        'Premium construction, renovation, and infrastructure delivery for residential and commercial clients in Rustenburg.',
+        'Premium construction, renovation, and commercial fit-out services with a modern client portal and project controls.',
       hours: [
-        { day: 'Mon', hours: '09:00 - 17:00' },
-        { day: 'Tue', hours: '09:00 - 17:00' },
-        { day: 'Wed', hours: '09:00 - 17:00' },
-        { day: 'Thu', hours: '09:00 - 17:00' },
-        { day: 'Fri', hours: '09:00 - 17:00' },
+        { day: 'Mon', hours: '08:00 - 17:00' },
+        { day: 'Tue', hours: '08:00 - 17:00' },
+        { day: 'Wed', hours: '08:00 - 17:00' },
+        { day: 'Thu', hours: '08:00 - 17:00' },
+        { day: 'Fri', hours: '08:00 - 17:00' },
         { day: 'Sat', hours: '09:00 - 13:00' },
         { day: 'Sun', hours: 'Closed' },
       ],
@@ -1575,71 +438,2206 @@ async function seedCompanyProfile() {
   });
 }
 
-async function seedNewsletterAndAudit(adminUserId) {
-  await prisma.newsletterSubscriber.upsert({
-    where: { email: 'updates@example.com' },
-    update: { subscribed: true },
-    create: {
+async function seedReferenceContent() {
+  await upsertManyById(prisma.service, SERVICE_DATA);
+  await upsertManyById(prisma.project, PORTFOLIO_PROJECT_DATA);
+  await upsertManyById(prisma.pricingPlan, PRICING_PLAN_DATA);
+}
+
+async function seedForumContent() {
+  await upsertManyById(prisma.forumCategory, FORUM_CATEGORY_DATA);
+
+  const forumThreads = [
+    {
+      id: 'demo-thread-budget',
+      categoryId: 'demo-forum-general',
+      title: 'How should we phase a live-in home renovation?',
+      slug: 'phase-live-in-home-renovation',
+      content:
+        'We need to renovate a kitchen, open the dining area, and keep the family in the home. What is the safest way to phase work without constant cost overruns?',
+      excerpt: 'Advice on phasing renovation work while the family remains in the house.',
+      authorName: 'Sibongile M.',
+      authorEmail: 'sibongile@example.com',
+      status: 'OPEN',
+      isPinned: true,
+      publishedAt: at('2026-03-30T08:00:00.000Z'),
+      createdAt: at('2026-03-30T08:00:00.000Z'),
+    },
+    {
+      id: 'demo-thread-materials',
+      categoryId: 'demo-forum-materials',
+      title: 'Best exterior paint systems for North West weather',
+      slug: 'best-exterior-paint-systems-north-west',
+      content:
+        'Which paint systems hold up best against heat, storms, and hard sunlight without constant repainting every season?',
+      excerpt: 'Durable exterior finish guidance for North West weather conditions.',
+      authorName: 'Karabo P.',
+      authorEmail: 'karabo@example.com',
+      status: 'OPEN',
+      isPinned: false,
+      publishedAt: at('2026-03-28T10:15:00.000Z'),
+      createdAt: at('2026-03-28T10:15:00.000Z'),
+    },
+    {
+      id: 'demo-thread-commercial',
+      categoryId: 'demo-forum-commercial',
+      title: 'How much detail should we prepare before a fit-out quote?',
+      slug: 'fit-out-quote-preparation-detail',
+      content:
+        'We are planning a small clinic upgrade and want cleaner pricing. What should we prepare before requesting a fit-out quote?',
+      excerpt: 'Documents and decisions that help reduce fit-out pricing surprises.',
+      authorName: 'Dr. N. Jacobs',
+      authorEmail: 'njacobs@example.com',
+      status: 'PENDING',
+      isPinned: false,
+      publishedAt: null,
+      createdAt: at('2026-03-31T07:45:00.000Z'),
+    },
+  ];
+
+  const forumReplies = [
+    {
+      id: 'demo-reply-budget-1',
+      threadId: 'demo-thread-budget',
+      authorName: 'Project Coordinator',
+      authorEmail: 'coordination@example.com',
+      content:
+        'Start with structural and services work first, keep kitchens and bathrooms in separate phases, and lock your long-lead materials before demolition starts.',
+      status: 'APPROVED',
+      createdAt: at('2026-03-30T12:10:00.000Z'),
+    },
+    {
+      id: 'demo-reply-budget-2',
+      threadId: 'demo-thread-budget',
+      authorName: 'Residential Builder',
+      authorEmail: 'builder@example.com',
+      content:
+        'Use milestone sign-off between phases and keep a 10 to 15 percent contingency for hidden issues in older homes.',
+      status: 'APPROVED',
+      createdAt: at('2026-03-30T14:35:00.000Z'),
+    },
+    {
+      id: 'demo-reply-materials-1',
+      threadId: 'demo-thread-materials',
+      authorName: 'Finish Specialist',
+      authorEmail: 'finishes@example.com',
+      content:
+        'A quality primer plus weather-resistant topcoat system will usually outperform chasing the lowest paint price.',
+      status: 'APPROVED',
+      createdAt: at('2026-03-29T09:25:00.000Z'),
+    },
+  ];
+
+  await upsertManyById(prisma.forumThread, forumThreads);
+  await upsertManyById(prisma.forumReply, forumReplies);
+}
+
+async function seedSuppliersAndMaterials() {
+  const suppliers = [
+    {
+      id: 'demo-supplier-build',
+      name: 'Rustenburg Build Supply',
+      contactPerson: 'Kabelo Maseko',
+      email: 'procurement@rustenburgbuildsupply.example.com',
+      phone: '014 555 1101',
+      alternatePhone: '082 411 2201',
+      address: '51 Platinum Street, Rustenburg',
+      cityArea: 'Rustenburg',
+      notes: 'Primary supplier for bricks, cement, and general building materials.',
+      supplyCategories: ['Cement', 'Bricks', 'General materials'],
+      status: 'ACTIVE',
+    },
+    {
+      id: 'demo-supplier-steel',
+      name: 'North West Steel and Roofing',
+      contactPerson: 'Riaan Fourie',
+      email: 'sales@nwsteelroofing.example.com',
+      phone: '014 555 2210',
+      alternatePhone: '083 622 1100',
+      address: '19 Industrial Avenue, Rustenburg',
+      cityArea: 'Rustenburg Industrial',
+      notes: 'Lead supplier for reinforcement steel, roof trusses, and roofing accessories.',
+      supplyCategories: ['Steel', 'Roofing', 'Structural materials'],
+      status: 'ACTIVE',
+    },
+    {
+      id: 'demo-supplier-readymix',
+      name: 'Platinum Ready Mix',
+      contactPerson: 'Neo Motloung',
+      email: 'dispatch@platinumreadymix.example.com',
+      phone: '014 555 3302',
+      alternatePhone: '079 887 4102',
+      address: '8 Aggregate Road, Rustenburg',
+      cityArea: 'Rustenburg',
+      notes: 'Used for slab pours and structural concrete deliveries.',
+      supplyCategories: ['Concrete', 'Aggregate'],
+      status: 'ACTIVE',
+    },
+    {
+      id: 'demo-supplier-plant',
+      name: 'Atlas Plant Hire',
+      contactPerson: 'Patrick Mokoena',
+      email: 'bookings@atlasplanthire.example.com',
+      phone: '014 555 4415',
+      alternatePhone: '082 903 4415',
+      address: '27 Yard Lane, Phokeng',
+      cityArea: 'Phokeng',
+      notes: 'Machine and delivery support for excavation and site movement.',
+      supplyCategories: ['Plant hire', 'Excavation support'],
+      status: 'ACTIVE',
+    },
+  ];
+
+  const materials = [
+    {
+      id: 'demo-material-cement',
+      name: 'Cement 42.5N 50kg Bag',
+      code: 'MAT-CEM-001',
+      category: 'Concrete',
+      description: 'General-purpose cement for slab, screed, and masonry support.',
+      unit: 'bag',
+      estimatedUnitCost: money(128),
+      notes: 'Baseline rate used for procurement planning.',
+      status: 'ACTIVE',
+      defaultSupplierId: 'demo-supplier-build',
+    },
+    {
+      id: 'demo-material-brick',
+      name: 'Clay Stock Brick',
+      code: 'MAT-BRK-001',
+      category: 'Masonry',
+      description: 'Standard clay stock brick for load-bearing and external wall work.',
+      unit: 'unit',
+      estimatedUnitCost: money(4.9),
+      notes: 'Estimate excludes delivery surcharge.',
+      status: 'ACTIVE',
+      defaultSupplierId: 'demo-supplier-build',
+    },
+    {
+      id: 'demo-material-rebar',
+      name: 'Y12 Reinforcement Steel',
+      code: 'MAT-STL-012',
+      category: 'Structural',
+      description: 'Reinforcement steel for slabs, beams, and support works.',
+      unit: 'length',
+      estimatedUnitCost: money(162),
+      notes: 'Ordered in structural batches.',
+      status: 'ACTIVE',
+      defaultSupplierId: 'demo-supplier-steel',
+    },
+    {
+      id: 'demo-material-truss',
+      name: 'Prefabricated Roof Truss Package',
+      code: 'MAT-ROOF-001',
+      category: 'Roofing',
+      description: 'Prefabricated truss package sized to approved roof plan.',
+      unit: 'package',
+      estimatedUnitCost: money(48500),
+      notes: 'Includes truss delivery and offload.',
+      status: 'ACTIVE',
+      defaultSupplierId: 'demo-supplier-steel',
+    },
+    {
+      id: 'demo-material-tile',
+      name: 'Porcelain Floor Tile',
+      code: 'MAT-TILE-001',
+      category: 'Finishes',
+      description: 'Durable porcelain floor tile used in living and commercial fit-out spaces.',
+      unit: 'm2',
+      estimatedUnitCost: money(245),
+      notes: 'Allowance excludes tile adhesive and trims.',
+      status: 'ACTIVE',
+      defaultSupplierId: 'demo-supplier-build',
+    },
+    {
+      id: 'demo-material-concrete',
+      name: '25MPa Ready Mix Concrete',
+      code: 'MAT-CONC-025',
+      category: 'Concrete',
+      description: 'Structural ready-mix concrete for slabs and foundations.',
+      unit: 'm3',
+      estimatedUnitCost: money(1890),
+      notes: 'Typical slab and footing planning rate.',
+      status: 'ACTIVE',
+      defaultSupplierId: 'demo-supplier-readymix',
+    },
+  ];
+
+  await upsertManyById(prisma.supplier, suppliers);
+  await upsertManyById(prisma.materialItem, materials);
+}
+
+async function seedDemoDataset(adminContext) {
+  const { adminId, staffIds } = adminContext;
+
+  const leads = [
+    {
+      id: 'demo-lead-pending',
+      fullName: 'Ayanda Mokoena',
+      email: 'ayanda.mokoena@example.com',
+      phone: '082 410 7781',
+      companyName: null,
+      location: 'Cashan, Rustenburg',
+      notes: 'Wants a revised patio and kitchen extension option before approving the build.',
+      status: 'QUOTED',
+      tags: ['demo', 'residential', 'pending-quote'],
+      sourceType: 'CONTACT_PAGE',
+      sourcePath: '/contact',
+      sourcePage: '/contact',
+      sourceReferrer: 'https://www.google.com',
+      utmSource: 'google',
+      utmMedium: 'organic',
+      utmCampaign: 'demo-kitchen-extension',
+      assignedToAdminId: adminId,
+      lastContactedAt: at('2026-03-29T11:30:00.000Z'),
+      createdAt: at('2026-03-22T08:30:00.000Z'),
+    },
+    {
+      id: 'demo-lead-active',
+      fullName: 'Naledi Khumalo',
+      email: 'naledi.khumalo@example.com',
+      phone: '083 622 4017',
+      companyName: null,
+      location: 'Waterfall East, Rustenburg',
+      notes: 'Primary demo client for the active project and portal walkthrough.',
+      status: 'WON',
+      tags: ['demo', 'active-project', 'portal'],
+      sourceType: 'QUOTE_PAGE',
+      sourcePath: '/quote',
+      sourcePage: '/quote',
+      sourceReferrer: 'https://elchananconstruction.co.za/pricing',
+      utmSource: 'facebook',
+      utmMedium: 'paid-social',
+      utmCampaign: 'demo-family-home-build',
+      assignedToAdminId: staffIds.operations,
+      lastContactedAt: at('2026-03-30T10:05:00.000Z'),
+      createdAt: at('2026-02-10T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-lead-completed',
+      fullName: 'Pieter van der Merwe',
+      email: 'pieter.vdm@example.com',
+      phone: '082 905 1188',
+      companyName: 'Meridian Medical Rooms',
+      location: 'Rustenburg CBD',
+      notes: 'Completed commercial fit-out used to demonstrate final handover, billing completion, and review capture.',
+      status: 'WON',
+      tags: ['demo', 'completed-project', 'commercial'],
+      sourceType: 'DIRECT',
+      sourcePath: '/contact',
+      sourcePage: '/contact',
+      sourceReferrer: '',
+      utmSource: '',
+      utmMedium: '',
+      utmCampaign: '',
+      assignedToAdminId: adminId,
+      lastContactedAt: at('2026-03-05T09:15:00.000Z'),
+      createdAt: at('2025-11-15T08:10:00.000Z'),
+    },
+  ];
+
+  await upsertManyById(prisma.lead, leads);
+
+  const portalUsers = [
+    {
+      id: 'demo-client-primary',
+      email: PORTAL_EMAIL,
+      password: bcrypt.hashSync(PORTAL_PASSWORD, 10),
+      fullName: 'Naledi Khumalo',
+      displayName: PORTAL_NAME,
+      phone: '083 622 4017',
+      companyName: null,
+      location: 'Waterfall East, Rustenburg',
+      contactPreference: 'WhatsApp',
+      isActive: true,
+      leadId: 'demo-lead-active',
+    },
+    {
+      id: 'demo-client-secondary',
+      email: SECONDARY_PORTAL_EMAIL,
+      password: bcrypt.hashSync(SECONDARY_PORTAL_PASSWORD, 10),
+      fullName: 'Pieter van der Merwe',
+      displayName: 'Pieter v/d Merwe',
+      phone: '082 905 1188',
+      companyName: 'Meridian Medical Rooms',
+      location: 'Rustenburg CBD',
+      contactPreference: 'Email',
+      isActive: true,
+      leadId: 'demo-lead-completed',
+    },
+  ];
+
+  await upsertManyById(prisma.clientUser, portalUsers);
+
+  const enquiries = [
+    {
+      id: 'demo-enquiry-pending',
+      leadId: 'demo-lead-pending',
+      fullName: 'Ayanda Mokoena',
+      email: 'ayanda.mokoena@example.com',
+      phone: '082 410 7781',
+      subject: 'Kitchen extension and covered patio quotation',
+      serviceInterest: 'Renovations and Upgrades',
+      preferredContactMethod: 'WhatsApp',
+      location: 'Cashan, Rustenburg',
+      message:
+        'We want to extend the kitchen, add a covered patio, and compare a standard finish package against a premium option.',
+      consentGiven: true,
+      referenceCode: 'ENQ-DEMO-2026-001',
+      status: 'IN_PROGRESS',
+      assignedToAdminId: adminId,
+      notes: 'Client is comparing two scope options before approval.',
+      followUpNotes: 'Send revised patio steel allowance and cabinetry option.',
+      lastContactedAt: at('2026-03-29T11:30:00.000Z'),
+      sourceType: 'CONTACT_PAGE',
+      sourcePath: '/contact',
+      sourcePage: '/contact',
+      sourceReferrer: 'https://www.google.com',
+      utmSource: 'google',
+      utmMedium: 'organic',
+      utmCampaign: 'demo-kitchen-extension',
+      sourceIpHash: 'demo-enquiry-pending',
+      userAgent: 'demo-seed',
+      createdAt: at('2026-03-23T10:00:00.000Z'),
+    },
+    {
+      id: 'demo-enquiry-active',
+      leadId: 'demo-lead-active',
+      fullName: 'Naledi Khumalo',
+      email: 'naledi.khumalo@example.com',
+      phone: '083 622 4017',
+      subject: 'New family home build in Waterfall East',
+      serviceInterest: 'Residential Construction',
+      preferredContactMethod: 'Phone',
+      location: 'Waterfall East, Rustenburg',
+      message:
+        'We need a contractor for a modern single-storey family home with a defined timeline, staged billing, and regular progress reporting.',
+      consentGiven: true,
+      referenceCode: 'ENQ-DEMO-2026-002',
+      status: 'RESOLVED',
+      assignedToAdminId: staffIds.operations,
+      notes: 'Converted to approved quote and active delivery project.',
+      followUpNotes: 'Portal access enabled and first progress claim issued.',
+      lastContactedAt: at('2026-03-30T10:05:00.000Z'),
+      sourceType: 'QUOTE_PAGE',
+      sourcePath: '/quote',
+      sourcePage: '/quote',
+      sourceReferrer: 'https://elchananconstruction.co.za/pricing',
+      utmSource: 'facebook',
+      utmMedium: 'paid-social',
+      utmCampaign: 'demo-family-home-build',
+      sourceIpHash: 'demo-enquiry-active',
+      userAgent: 'demo-seed',
+      createdAt: at('2026-02-12T10:15:00.000Z'),
+    },
+    {
+      id: 'demo-enquiry-completed',
+      leadId: 'demo-lead-completed',
+      fullName: 'Pieter van der Merwe',
+      email: 'pieter.vdm@example.com',
+      phone: '082 905 1188',
+      subject: 'Medical practice interior refurbishment',
+      serviceInterest: 'Commercial Fit-out',
+      preferredContactMethod: 'Email',
+      location: 'Rustenburg CBD',
+      message:
+        'We need a clinic refresh with reception improvements, consultation room upgrades, and a final handover before reopening.',
+      consentGiven: true,
+      referenceCode: 'ENQ-DEMO-2025-014',
+      status: 'RESOLVED',
+      assignedToAdminId: adminId,
+      notes: 'Closed as successful delivery with final payment and testimonial.',
+      followUpNotes: 'Review approved and featured on the site.',
+      lastContactedAt: at('2026-03-05T09:15:00.000Z'),
+      sourceType: 'DIRECT',
+      sourcePath: '/contact',
+      sourcePage: '/contact',
+      sourceReferrer: '',
+      utmSource: '',
+      utmMedium: '',
+      utmCampaign: '',
+      sourceIpHash: 'demo-enquiry-completed',
+      userAgent: 'demo-seed',
+      createdAt: at('2025-11-18T11:40:00.000Z'),
+    },
+  ];
+
+  await upsertManyById(prisma.contactEnquiry, enquiries);
+
+  const quotes = [
+    {
+      id: 'demo-quote-pending',
+      leadId: 'demo-lead-pending',
+      fullName: 'Ayanda Mokoena',
+      email: 'ayanda.mokoena@example.com',
+      phone: '082 410 7781',
+      serviceType: 'Renovations and Upgrades',
+      projectType: 'Residential extension',
+      location: 'Cashan, Rustenburg',
+      estimatedBudgetRange: 'R180,000 - R260,000',
+      preferredStartDate: at('2026-04-20T08:00:00.000Z'),
+      siteVisitRequired: true,
+      projectDescription:
+        'Kitchen extension, covered patio structure, and interior reconfiguration with two finish options for client review.',
+      consentGiven: true,
+      referenceCode: 'QT-DEMO-2026-001',
+      status: 'RESPONDED',
+      approvalStatus: 'VIEWED',
+      clientViewedAt: at('2026-03-28T09:10:00.000Z'),
+      assignedToAdminId: adminId,
+      internalNotes: 'Client asked for revised steel patio option before acceptance.',
+      followUpNotes: 'Share updated cabinetry allowance and lock site decision by first week of April.',
+      lastContactedAt: at('2026-03-29T11:30:00.000Z'),
+      quoteSentAt: at('2026-03-27T15:15:00.000Z'),
+      quoteSummary:
+        'Preconstruction renovation estimate covering kitchen extension works, structural steel allowance, and final cabinetry package options.',
+      scopeNotes:
+        'Includes demolition, extension shell, roofing, cabinetry allowance, paint touch-ups, and patio structure.',
+      lineItems: [
+        { label: 'Demolition and extension shell works', amount: zarLabel(72000) },
+        { label: 'Covered patio steel and roofing package', amount: zarLabel(48500) },
+        { label: 'Kitchen cabinetry and finishes allowance', amount: zarLabel(64500) },
+      ],
+      estimateSubtotal: money(185000),
+      estimateTax: money(27750),
+      estimateTotal: money(212750),
+      validityDays: 14,
+      exclusions: 'Municipal fees, electrical rewiring, and premium appliance supply are excluded.',
+      assumptions:
+        'Price assumes no hidden structural defects and uninterrupted weekday site access.',
+      termsDisclaimer:
+        'Final contract value is confirmed after client sign-off and material selection approval.',
+      sourceType: 'CONTACT_PAGE',
+      sourcePath: '/contact',
+      sourcePage: '/contact',
+      sourceReferrer: 'https://www.google.com',
+      utmSource: 'google',
+      utmMedium: 'organic',
+      utmCampaign: 'demo-kitchen-extension',
+      sourceIpHash: 'demo-quote-pending',
+      userAgent: 'demo-seed',
+      createdAt: at('2026-03-26T14:00:00.000Z'),
+    },
+    {
+      id: 'demo-quote-active',
+      leadId: 'demo-lead-active',
+      fullName: 'Naledi Khumalo',
+      email: 'naledi.khumalo@example.com',
+      phone: '083 622 4017',
+      serviceType: 'Residential Construction',
+      projectType: 'New build',
+      location: 'Waterfall East, Rustenburg',
+      estimatedBudgetRange: 'R1,200,000 - R1,600,000',
+      preferredStartDate: at('2026-02-24T08:00:00.000Z'),
+      siteVisitRequired: true,
+      projectDescription:
+        'Single-storey family residence with open-plan living, double garage, and phased finish delivery.',
+      consentGiven: true,
+      referenceCode: 'QT-DEMO-2026-002',
+      status: 'WON',
+      approvalStatus: 'ACCEPTED',
+      clientViewedAt: at('2026-02-17T09:20:00.000Z'),
+      clientRespondedAt: at('2026-02-18T11:20:00.000Z'),
+      clientResponseNote: 'Approved. Proceed with February mobilization and staged billing.',
+      clientRespondedByClientUserId: 'demo-client-primary',
+      assignedToAdminId: staffIds.operations,
+      internalNotes: 'Primary demo project for active delivery, procurement, and portal visibility.',
+      followUpNotes: 'Site mobilized, deposit partially paid, structure progressing.',
+      lastContactedAt: at('2026-03-30T10:05:00.000Z'),
+      quoteSentAt: at('2026-02-16T08:30:00.000Z'),
+      quoteSummary:
+        'Turnkey residential build proposal with foundation, shell, roofing, and staged finishes aligned to a four-month delivery window.',
+      scopeNotes:
+        'Includes site setup, foundation and slab, masonry, roof package, external doors and windows, first-fix, and selected finishes.',
+      lineItems: [
+        { label: 'Site establishment and substructure', amount: zarLabel(318000) },
+        { label: 'Superstructure, walls, and roof package', amount: zarLabel(684000) },
+        { label: 'Finishes, services, and handover works', amount: zarLabel(342000) },
+      ],
+      estimateSubtotal: money(1344000),
+      estimateTax: money(201600),
+      estimateTotal: money(1545600),
+      validityDays: 21,
+      exclusions: 'Council contributions, loose furniture, and alarm system supply are excluded.',
+      assumptions:
+        'Estimate assumes standard soil conditions and client sign-off on finishes within agreed selection dates.',
+      termsDisclaimer:
+        'Construction program is subject to material lead times, weather, and signed contract approval.',
+      sourceType: 'QUOTE_PAGE',
+      sourcePath: '/quote',
+      sourcePage: '/quote',
+      sourceReferrer: 'https://elchananconstruction.co.za/pricing',
+      utmSource: 'facebook',
+      utmMedium: 'paid-social',
+      utmCampaign: 'demo-family-home-build',
+      sourceIpHash: 'demo-quote-active',
+      userAgent: 'demo-seed',
+      createdAt: at('2026-02-15T16:00:00.000Z'),
+    },
+    {
+      id: 'demo-quote-completed',
+      leadId: 'demo-lead-completed',
+      fullName: 'Pieter van der Merwe',
+      email: 'pieter.vdm@example.com',
+      phone: '082 905 1188',
+      serviceType: 'Commercial Fit-out',
+      projectType: 'Medical suite refurbishment',
+      location: 'Rustenburg CBD',
+      estimatedBudgetRange: 'R500,000 - R750,000',
+      preferredStartDate: at('2025-11-30T08:00:00.000Z'),
+      siteVisitRequired: true,
+      projectDescription:
+        'Reception and consultation room refurbishment with paintwork, flooring, joinery corrections, and final snag clearance.',
+      consentGiven: true,
+      referenceCode: 'QT-DEMO-2025-014',
+      status: 'WON',
+      approvalStatus: 'ACCEPTED',
+      clientViewedAt: at('2025-11-23T09:30:00.000Z'),
+      clientRespondedAt: at('2025-11-25T15:40:00.000Z'),
+      clientResponseNote: 'Approved for immediate scheduling after final clinic shutdown.',
+      clientRespondedByClientUserId: 'demo-client-secondary',
+      assignedToAdminId: adminId,
+      internalNotes: 'Completed commercial project used to demonstrate paid billing and testimonial capture.',
+      followUpNotes: 'Final handover complete and testimonial approved.',
+      lastContactedAt: at('2026-03-05T09:15:00.000Z'),
+      quoteSentAt: at('2025-11-22T13:10:00.000Z'),
+      quoteSummary:
+        'Commercial fit-out estimate for reception refresh, consultation room upgrades, flooring replacement, and final handover support.',
+      scopeNotes:
+        'Includes demolition, partitions, flooring, paint, selected joinery, medical-room reinstatement, and final snag list closure.',
+      lineItems: [
+        { label: 'Demolition, prep, and partition works', amount: zarLabel(162000) },
+        { label: 'Flooring, paint, and consultation rooms', amount: zarLabel(238000) },
+        { label: 'Reception joinery and final handover package', amount: zarLabel(248000) },
+      ],
+      estimateSubtotal: money(648000),
+      estimateTax: money(97200),
+      estimateTotal: money(745200),
+      validityDays: 21,
+      exclusions: 'Loose medical equipment, branding graphics, and municipal signage approvals are excluded.',
+      assumptions:
+        'Client supplies access windows and confirms specialist equipment locations before first-fix closeout.',
+      termsDisclaimer:
+        'Commercial handover date remains subject to specialist approvals, weather, and staged client sign-off.',
+      sourceType: 'DIRECT',
+      sourcePath: '/contact',
+      sourcePage: '/contact',
+      sourceReferrer: '',
+      utmSource: '',
+      utmMedium: '',
+      utmCampaign: '',
+      sourceIpHash: 'demo-quote-completed',
+      userAgent: 'demo-seed',
+      createdAt: at('2025-11-22T13:00:00.000Z'),
+    },
+  ];
+
+  await upsertManyById(prisma.quoteRequest, quotes);
+
+  const deliveryProjects = [
+    {
+      id: 'demo-project-planned',
+      title: 'Mokoena Extension Planning',
+      status: 'PLANNED',
+      portalVisible: false,
+      projectCode: 'ECC-PLN-2026-001',
+      clientSummary:
+        'Preconstruction planning is underway while the quotation revision is reviewed and final scope decisions are confirmed.',
+      startTarget: at('2026-04-20T08:00:00.000Z'),
+      estimatedCompletion: at('2026-06-05T16:00:00.000Z'),
+      lastClientUpdateAt: null,
+      notes:
+        'Internal planning shell reserved to help the team prep procurement and sequencing before the client signs the revised quote.',
+      quoteRequestId: null,
+      leadId: 'demo-lead-pending',
+      createdByAdminId: adminId,
+      createdAt: at('2026-03-28T16:10:00.000Z'),
+    },
+    {
+      id: 'demo-project-active',
+      title: 'Khumalo Family Residence',
+      status: 'ACTIVE',
+      portalVisible: true,
+      projectCode: 'ECC-ACT-2026-002',
+      clientSummary:
+        'Construction is active. Foundations and shell works are complete, roofing is underway, and the portal reflects the latest approved updates and invoices.',
+      startTarget: at('2026-02-24T08:00:00.000Z'),
+      estimatedCompletion: at('2026-04-18T16:00:00.000Z'),
+      lastClientUpdateAt: at('2026-03-30T14:10:00.000Z'),
+      notes:
+        'Primary demo project showing approved quote conversion, procurement planning, site tasks, site logs, progress billing, and portal visibility.',
+      quoteRequestId: 'demo-quote-active',
+      leadId: 'demo-lead-active',
+      createdByAdminId: staffIds.operations,
+      createdAt: at('2026-02-19T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-project-completed',
+      title: 'Meridian Medical Rooms Upgrade',
+      status: 'COMPLETED',
+      portalVisible: true,
+      projectCode: 'ECC-CMP-2025-014',
+      clientSummary:
+        'The refurbishment is complete, final payment has been received, and handover documentation is available for reference.',
+      startTarget: at('2025-11-30T08:00:00.000Z'),
+      estimatedCompletion: at('2026-02-28T15:00:00.000Z'),
+      lastClientUpdateAt: at('2026-02-28T16:20:00.000Z'),
+      notes:
+        'Completed project for demonstrating final billing, fully received procurement, closed tasks, and approved testimonial.',
+      quoteRequestId: 'demo-quote-completed',
+      leadId: 'demo-lead-completed',
+      createdByAdminId: adminId,
+      createdAt: at('2025-11-26T10:15:00.000Z'),
+    },
+  ];
+
+  await upsertManyById(prisma.deliveryProject, deliveryProjects);
+
+  const projectAssignments = [
+    {
+      id: 'demo-assignment-planned-pm',
+      deliveryProjectId: 'demo-project-planned',
+      adminUserId: adminId,
+      createdByAdminId: adminId,
+      role: 'PROJECT_MANAGER',
+      externalName: null,
+      externalCompany: null,
+      startDate: at('2026-03-28T16:30:00.000Z'),
+      endDate: null,
+      notes: 'Holding internal planning ownership until quote approval is confirmed.',
+    },
+    {
+      id: 'demo-assignment-planned-sales',
+      deliveryProjectId: 'demo-project-planned',
+      adminUserId: adminId,
+      createdByAdminId: adminId,
+      role: 'SALES_SUPPORT',
+      externalName: null,
+      externalCompany: null,
+      startDate: at('2026-03-28T16:30:00.000Z'),
+      endDate: null,
+      notes: 'Managing client revision and quote follow-up.',
+    },
+    {
+      id: 'demo-assignment-active-pm',
+      deliveryProjectId: 'demo-project-active',
+      adminUserId: staffIds.operations,
+      createdByAdminId: adminId,
+      role: 'PROJECT_MANAGER',
+      externalName: null,
+      externalCompany: null,
+      startDate: at('2026-02-19T09:30:00.000Z'),
+      endDate: null,
+      notes: 'Owns schedule, procurement approvals, and billing alignment.',
+    },
+    {
+      id: 'demo-assignment-active-site',
+      deliveryProjectId: 'demo-project-active',
+      adminUserId: staffIds.site,
+      createdByAdminId: staffIds.operations,
+      role: 'SITE_SUPERVISOR',
+      externalName: null,
+      externalCompany: null,
+      startDate: at('2026-02-24T07:00:00.000Z'),
+      endDate: null,
+      notes: 'Leads daily site execution and field reporting.',
+    },
+    {
+      id: 'demo-assignment-active-contractor',
+      deliveryProjectId: 'demo-project-active',
+      adminUserId: null,
+      createdByAdminId: staffIds.operations,
+      role: 'CONTRACTOR',
+      externalName: 'Kagiso Roofing Team',
+      externalCompany: 'Kagiso Roofing',
+      startDate: at('2026-03-27T08:00:00.000Z'),
+      endDate: at('2026-04-03T17:00:00.000Z'),
+      notes: 'Roof installation subcontractor for truss and sheeting package.',
+    },
+    {
+      id: 'demo-assignment-completed-pm',
+      deliveryProjectId: 'demo-project-completed',
+      adminUserId: adminId,
+      createdByAdminId: adminId,
+      role: 'PROJECT_MANAGER',
+      externalName: null,
+      externalCompany: null,
+      startDate: at('2025-11-26T11:00:00.000Z'),
+      endDate: at('2026-02-28T16:30:00.000Z'),
+      notes: 'Managed commercial schedule, variations, and final handover sign-off.',
+    },
+    {
+      id: 'demo-assignment-completed-site',
+      deliveryProjectId: 'demo-project-completed',
+      adminUserId: staffIds.site,
+      createdByAdminId: adminId,
+      role: 'SITE_SUPERVISOR',
+      externalName: null,
+      externalCompany: null,
+      startDate: at('2025-11-30T07:30:00.000Z'),
+      endDate: at('2026-02-27T17:30:00.000Z'),
+      notes: 'Supervised site progress, snagging, and final finishes closeout.',
+    },
+  ];
+
+  const projectMilestones = [
+    {
+      id: 'demo-milestone-planned-visit',
+      deliveryProjectId: 'demo-project-planned',
+      title: 'Scope confirmation and revised quote issue',
+      description: 'Confirm kitchen layout, patio footprint, and revised allowance decisions before approval.',
+      status: 'IN_PROGRESS',
+      targetDate: at('2026-04-03T16:00:00.000Z'),
+      completedDate: null,
+      sortOrder: 1,
+      clientVisible: false,
+      createdAt: at('2026-03-28T16:45:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-planned-approval',
+      deliveryProjectId: 'demo-project-planned',
+      title: 'Quote approval and mobilization readiness',
+      description: 'Client approval required before procurement issue and site mobilization.',
+      status: 'PENDING',
+      targetDate: at('2026-04-10T16:00:00.000Z'),
+      completedDate: null,
+      sortOrder: 2,
+      clientVisible: false,
+      createdAt: at('2026-03-28T16:50:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-active-kickoff',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Site mobilization and substructure',
+      description: 'Site establishment, setting out, and substructure works completed.',
+      status: 'COMPLETED',
+      targetDate: at('2026-02-28T16:00:00.000Z'),
+      completedDate: at('2026-02-28T16:00:00.000Z'),
+      sortOrder: 1,
+      clientVisible: true,
+      createdAt: at('2026-02-19T09:10:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-active-shell',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Wall plate and shell completion',
+      description: 'Structural shell complete and roofing package in progress.',
+      status: 'COMPLETED',
+      targetDate: at('2026-03-22T16:00:00.000Z'),
+      completedDate: at('2026-03-22T16:00:00.000Z'),
+      sortOrder: 2,
+      clientVisible: true,
+      createdAt: at('2026-02-19T09:15:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-active-roof',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Roof installation and weather-tight stage',
+      description: 'Roof trusses and sheeting are currently on site for installation.',
+      status: 'IN_PROGRESS',
+      targetDate: at('2026-04-03T16:00:00.000Z'),
+      completedDate: null,
+      sortOrder: 3,
+      clientVisible: true,
+      createdAt: at('2026-02-19T09:20:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-active-finishes',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Services and interior finishes',
+      description: 'First-fix and finish selections follow roofing completion.',
+      status: 'PENDING',
+      targetDate: at('2026-04-18T16:00:00.000Z'),
+      completedDate: null,
+      sortOrder: 4,
+      clientVisible: true,
+      createdAt: at('2026-02-19T09:25:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-completed-mobilize',
+      deliveryProjectId: 'demo-project-completed',
+      title: 'Site setup and demolition',
+      description: 'Commercial site prepared and demolition package cleared.',
+      status: 'COMPLETED',
+      targetDate: at('2025-12-05T16:00:00.000Z'),
+      completedDate: at('2025-12-05T16:00:00.000Z'),
+      sortOrder: 1,
+      clientVisible: true,
+      createdAt: at('2025-11-26T10:30:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-completed-fitout',
+      deliveryProjectId: 'demo-project-completed',
+      title: 'Reception and consultation room fit-out',
+      description: 'Joinery, flooring, and finish package delivered.',
+      status: 'COMPLETED',
+      targetDate: at('2026-01-30T16:00:00.000Z'),
+      completedDate: at('2026-01-30T16:00:00.000Z'),
+      sortOrder: 2,
+      clientVisible: true,
+      createdAt: at('2025-11-26T10:35:00.000Z'),
+    },
+    {
+      id: 'demo-milestone-completed-handover',
+      deliveryProjectId: 'demo-project-completed',
+      title: 'Final snagging and handover',
+      description: 'Snag list cleared, final payment received, and handover signed off.',
+      status: 'COMPLETED',
+      targetDate: at('2026-02-28T16:00:00.000Z'),
+      completedDate: at('2026-02-28T16:00:00.000Z'),
+      sortOrder: 3,
+      clientVisible: true,
+      createdAt: at('2025-11-26T10:40:00.000Z'),
+    },
+  ];
+
+  const projectUpdates = [
+    {
+      id: 'demo-update-active-kickoff',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Kickoff and excavation completed',
+      summary: 'Site setup is complete and substructure works are on program.',
+      body:
+        'Kickoff meeting is complete, the excavation package has been cleared, and the team has locked the substructure sequence for the next inspection window.',
+      postedByLabel: 'Operations Manager',
+      postedByAdminId: staffIds.operations,
+      clientVisible: true,
+      imageUrl: BRAND_IMAGES.civil,
+      attachmentUrl: null,
+      publishedAt: at('2026-02-25T16:10:00.000Z'),
+      createdAt: at('2026-02-25T16:10:00.000Z'),
+    },
+    {
+      id: 'demo-update-active-shell',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Masonry package completed',
+      summary: 'The shell is up and ready for roof installation.',
+      body:
+        'External and internal masonry works are complete. The project has moved cleanly into the roofing package with truss delivery now confirmed.',
+      postedByLabel: 'Site Supervisor',
+      postedByAdminId: staffIds.site,
+      clientVisible: true,
+      imageUrl: BRAND_IMAGES.scaffold,
+      attachmentUrl: null,
+      publishedAt: at('2026-03-24T15:40:00.000Z'),
+      createdAt: at('2026-03-24T15:40:00.000Z'),
+    },
+    {
+      id: 'demo-update-active-roof',
+      deliveryProjectId: 'demo-project-active',
+      title: 'Roofing team mobilized',
+      summary: 'Roofing materials are on site and weather-tight works are underway.',
+      body:
+        'Roof trusses have arrived, the roofing contractor is mobilized, and the team is working to bring the project to weather-tight stage this week.',
+      postedByLabel: 'Project Manager',
+      postedByAdminId: staffIds.operations,
+      clientVisible: true,
+      imageUrl: BRAND_IMAGES.roofing,
+      attachmentUrl: null,
+      publishedAt: at('2026-03-30T14:10:00.000Z'),
+      createdAt: at('2026-03-30T14:10:00.000Z'),
+    },
+    {
+      id: 'demo-update-completed-floors',
+      deliveryProjectId: 'demo-project-completed',
+      title: 'Finishes package signed off',
+      summary: 'Reception and consultation spaces have been completed.',
+      body:
+        'Flooring, paintwork, ceiling corrections, and reception joinery are complete. The project moved into final snagging and clean-down without delay.',
+      postedByLabel: 'Project Manager',
+      postedByAdminId: adminId,
+      clientVisible: true,
+      imageUrl: BRAND_IMAGES.commercialInterior,
+      attachmentUrl: null,
+      publishedAt: at('2026-01-31T13:00:00.000Z'),
+      createdAt: at('2026-01-31T13:00:00.000Z'),
+    },
+    {
+      id: 'demo-update-completed-handover',
+      deliveryProjectId: 'demo-project-completed',
+      title: 'Project handover complete',
+      summary: 'Final payment received and handover pack issued.',
+      body:
+        'All snag items are closed, the final payment has been received, and the client handover pack has been shared in the portal for future reference.',
+      postedByLabel: 'Accounts Coordinator',
+      postedByAdminId: staffIds.accounts,
+      clientVisible: true,
+      imageUrl: BRAND_IMAGES.blueprint,
+      attachmentUrl: null,
+      publishedAt: at('2026-02-28T16:20:00.000Z'),
+      createdAt: at('2026-02-28T16:20:00.000Z'),
+    },
+  ];
+
+  const procurementItems = [
+    {
+      id: 'demo-procurement-planned-steel',
+      deliveryProjectId: 'demo-project-planned',
+      materialItemId: 'demo-material-truss',
+      preferredSupplierId: 'demo-supplier-steel',
+      createdByAdminId: adminId,
+      name: 'Patio steel support allowance',
+      category: 'Preconstruction',
+      description: 'Revised allowance for covered patio steel and roof framing.',
+      unit: 'package',
+      estimatedQuantity: money(1),
+      estimatedUnitCost: money(48500),
+      requiredBy: at('2026-04-15T16:00:00.000Z'),
+      status: 'PLANNED',
+      notes: 'Hold until client selects final patio option.',
+      createdAt: at('2026-03-28T17:00:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-planned-tiles',
+      deliveryProjectId: 'demo-project-planned',
+      materialItemId: 'demo-material-tile',
+      preferredSupplierId: 'demo-supplier-build',
+      createdByAdminId: adminId,
+      name: 'Kitchen floor tile allowance',
+      category: 'Finishes',
+      description: 'Client comparing standard and premium tile ranges.',
+      unit: 'm2',
+      estimatedQuantity: money(34),
+      estimatedUnitCost: money(245),
+      requiredBy: at('2026-04-20T16:00:00.000Z'),
+      status: 'PLANNED',
+      notes: 'Selection pending final quote approval.',
+      createdAt: at('2026-03-28T17:05:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-active-cement',
+      deliveryProjectId: 'demo-project-active',
+      materialItemId: 'demo-material-cement',
+      preferredSupplierId: 'demo-supplier-build',
+      createdByAdminId: staffIds.operations,
+      name: 'Cement for blockwork and screed',
+      category: 'Concrete',
+      description: 'Remaining cement allowance for walls and first screed works.',
+      unit: 'bag',
+      estimatedQuantity: money(180),
+      estimatedUnitCost: money(128),
+      requiredBy: at('2026-04-02T16:00:00.000Z'),
+      status: 'ORDERED',
+      notes: 'Included in the current material order.',
+      createdAt: at('2026-03-20T08:20:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-active-truss',
+      deliveryProjectId: 'demo-project-active',
+      materialItemId: 'demo-material-truss',
+      preferredSupplierId: 'demo-supplier-steel',
+      createdByAdminId: staffIds.operations,
+      name: 'Roof truss package',
+      category: 'Roofing',
+      description: 'Prefabricated trusses for the main roof package.',
+      unit: 'package',
+      estimatedQuantity: money(1),
+      estimatedUnitCost: money(48500),
+      requiredBy: at('2026-03-31T16:00:00.000Z'),
+      status: 'ORDERED',
+      notes: 'Delivery confirmed and installation in progress.',
+      createdAt: at('2026-03-20T08:25:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-active-rebar',
+      deliveryProjectId: 'demo-project-active',
+      materialItemId: 'demo-material-rebar',
+      preferredSupplierId: 'demo-supplier-steel',
+      createdByAdminId: staffIds.operations,
+      name: 'Additional reinforcement steel',
+      category: 'Structural',
+      description: 'Top-up reinforcement for lintels and service edge corrections.',
+      unit: 'length',
+      estimatedQuantity: money(42),
+      estimatedUnitCost: money(162),
+      requiredBy: at('2026-04-06T16:00:00.000Z'),
+      status: 'REQUESTED',
+      notes: 'Submitted for approval in next purchase record.',
+      createdAt: at('2026-03-26T09:10:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-active-tiles',
+      deliveryProjectId: 'demo-project-active',
+      materialItemId: 'demo-material-tile',
+      preferredSupplierId: 'demo-supplier-build',
+      createdByAdminId: staffIds.operations,
+      name: 'Living area floor tile allowance',
+      category: 'Finishes',
+      description: 'Initial tile procurement planning for finish stage.',
+      unit: 'm2',
+      estimatedQuantity: money(96),
+      estimatedUnitCost: money(245),
+      requiredBy: at('2026-04-15T16:00:00.000Z'),
+      status: 'PLANNED',
+      notes: 'Selection to be confirmed before finishes mobilize.',
+      createdAt: at('2026-03-26T09:20:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-completed-paint',
+      deliveryProjectId: 'demo-project-completed',
+      materialItemId: 'demo-material-tile',
+      preferredSupplierId: 'demo-supplier-build',
+      createdByAdminId: adminId,
+      name: 'Flooring finish package',
+      category: 'Finishes',
+      description: 'Porcelain tile package for waiting area and consultation rooms.',
+      unit: 'm2',
+      estimatedQuantity: money(118),
+      estimatedUnitCost: money(245),
+      requiredBy: at('2026-01-15T16:00:00.000Z'),
+      status: 'RECEIVED',
+      notes: 'Received and installed.',
+      createdAt: at('2025-12-20T10:15:00.000Z'),
+    },
+    {
+      id: 'demo-procurement-completed-concrete',
+      deliveryProjectId: 'demo-project-completed',
+      materialItemId: 'demo-material-concrete',
+      preferredSupplierId: 'demo-supplier-readymix',
+      createdByAdminId: adminId,
+      name: 'Reception counter base pour',
+      category: 'Concrete',
+      description: 'Specialty concrete pour for reception counter build-up.',
+      unit: 'm3',
+      estimatedQuantity: money(4.5),
+      estimatedUnitCost: money(1890),
+      requiredBy: at('2025-12-10T16:00:00.000Z'),
+      status: 'RECEIVED',
+      notes: 'Poured and closed out during early fit-out phase.',
+      createdAt: at('2025-12-01T08:45:00.000Z'),
+    },
+  ];
+
+  const purchaseRequests = [
+    {
+      id: 'demo-purchase-active-order',
+      referenceCode: 'PR-DEMO-2026-001',
+      deliveryProjectId: 'demo-project-active',
+      supplierId: 'demo-supplier-steel',
+      createdByAdminId: staffIds.operations,
+      approvedByAdminId: adminId,
+      status: 'ORDERED',
+      requestDate: at('2026-03-20T09:00:00.000Z'),
+      issueDate: at('2026-03-21T08:30:00.000Z'),
+      expectedDeliveryDate: at('2026-03-31T16:00:00.000Z'),
+      submittedAt: at('2026-03-20T10:20:00.000Z'),
+      approvedAt: at('2026-03-20T14:10:00.000Z'),
+      orderedAt: at('2026-03-21T08:30:00.000Z'),
+      receivedAt: null,
+      notes: 'Roof truss and structural steel package issued to supplier.',
+      internalNotes: 'Delivery tracking confirmed with supplier for Tuesday offload.',
+      createdAt: at('2026-03-20T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-purchase-active-submitted',
+      referenceCode: 'PR-DEMO-2026-002',
+      deliveryProjectId: 'demo-project-active',
+      supplierId: 'demo-supplier-build',
+      createdByAdminId: staffIds.operations,
+      approvedByAdminId: null,
+      status: 'SUBMITTED',
+      requestDate: at('2026-03-27T09:30:00.000Z'),
+      issueDate: null,
+      expectedDeliveryDate: at('2026-04-06T16:00:00.000Z'),
+      submittedAt: at('2026-03-27T12:00:00.000Z'),
+      approvedAt: null,
+      orderedAt: null,
+      receivedAt: null,
+      notes: 'Top-up material request for reinforcement and remaining cement allowance.',
+      internalNotes: 'Waiting for approval after quantity confirmation from site supervisor.',
+      createdAt: at('2026-03-27T09:30:00.000Z'),
+    },
+    {
+      id: 'demo-purchase-completed',
+      referenceCode: 'PR-DEMO-2025-014',
+      deliveryProjectId: 'demo-project-completed',
+      supplierId: 'demo-supplier-build',
+      createdByAdminId: adminId,
+      approvedByAdminId: adminId,
+      status: 'RECEIVED',
+      requestDate: at('2025-12-18T08:45:00.000Z'),
+      issueDate: at('2025-12-18T11:00:00.000Z'),
+      expectedDeliveryDate: at('2025-12-22T16:00:00.000Z'),
+      submittedAt: at('2025-12-18T09:05:00.000Z'),
+      approvedAt: at('2025-12-18T10:20:00.000Z'),
+      orderedAt: at('2025-12-18T11:00:00.000Z'),
+      receivedAt: at('2025-12-22T15:40:00.000Z'),
+      notes: 'Finish package fully received for commercial fit-out.',
+      internalNotes: 'Closed without variances.',
+      createdAt: at('2025-12-18T08:45:00.000Z'),
+    },
+  ];
+
+  const purchaseRequestLineItems = [
+    {
+      id: 'demo-purchase-line-order-1',
+      purchaseRequestId: 'demo-purchase-active-order',
+      projectProcurementItemId: 'demo-procurement-active-truss',
+      materialItemId: 'demo-material-truss',
+      description: 'Roof truss package',
+      quantity: money(1),
+      unit: 'package',
+      estimatedUnitCost: money(48500),
+      actualUnitCost: money(49200),
+      receivedQuantity: money(0),
+      notes: 'Supplier confirmed manufacture and delivery.',
+      sortOrder: 1,
+      createdAt: at('2026-03-20T09:10:00.000Z'),
+    },
+    {
+      id: 'demo-purchase-line-order-2',
+      purchaseRequestId: 'demo-purchase-active-order',
+      projectProcurementItemId: 'demo-procurement-active-cement',
+      materialItemId: 'demo-material-cement',
+      description: 'Cement top-up for wall and screed package',
+      quantity: money(180),
+      unit: 'bag',
+      estimatedUnitCost: money(128),
+      actualUnitCost: money(129),
+      receivedQuantity: money(0),
+      notes: 'To ship with the roofing delivery truck.',
+      sortOrder: 2,
+      createdAt: at('2026-03-20T09:12:00.000Z'),
+    },
+    {
+      id: 'demo-purchase-line-submitted-1',
+      purchaseRequestId: 'demo-purchase-active-submitted',
+      projectProcurementItemId: 'demo-procurement-active-rebar',
+      materialItemId: 'demo-material-rebar',
+      description: 'Additional reinforcement steel',
+      quantity: money(42),
+      unit: 'length',
+      estimatedUnitCost: money(162),
+      actualUnitCost: null,
+      receivedQuantity: money(0),
+      notes: 'Awaiting approval.',
+      sortOrder: 1,
+      createdAt: at('2026-03-27T09:40:00.000Z'),
+    },
+    {
+      id: 'demo-purchase-line-completed-1',
+      purchaseRequestId: 'demo-purchase-completed',
+      projectProcurementItemId: 'demo-procurement-completed-paint',
+      materialItemId: 'demo-material-tile',
+      description: 'Porcelain flooring package',
+      quantity: money(118),
+      unit: 'm2',
+      estimatedUnitCost: money(245),
+      actualUnitCost: money(241),
+      receivedQuantity: money(118),
+      notes: 'Fully received and installed.',
+      sortOrder: 1,
+      createdAt: at('2025-12-18T08:55:00.000Z'),
+    },
+    {
+      id: 'demo-purchase-line-completed-2',
+      purchaseRequestId: 'demo-purchase-completed',
+      projectProcurementItemId: 'demo-procurement-completed-concrete',
+      materialItemId: 'demo-material-concrete',
+      description: 'Reception counter base pour',
+      quantity: money(4.5),
+      unit: 'm3',
+      estimatedUnitCost: money(1890),
+      actualUnitCost: money(1925),
+      receivedQuantity: money(4.5),
+      notes: 'Closed after pour inspection.',
+      sortOrder: 2,
+      createdAt: at('2025-12-18T09:00:00.000Z'),
+    },
+  ];
+
+  const siteTasks = [
+    {
+      id: 'demo-site-task-planned-1',
+      deliveryProjectId: 'demo-project-planned',
+      projectMilestoneId: 'demo-milestone-planned-visit',
+      title: 'Confirm revised patio steel option',
+      description: 'Finalize the preferred patio support option before quote revision closes.',
+      status: 'IN_PROGRESS',
+      priority: 'HIGH',
+      dueDate: at('2026-04-02T16:00:00.000Z'),
+      startedAt: at('2026-03-29T10:00:00.000Z'),
+      completedAt: null,
+      assignedToAdminId: adminId,
+      createdByAdminId: adminId,
+      createdAt: at('2026-03-28T17:20:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-planned-2',
+      deliveryProjectId: 'demo-project-planned',
+      projectMilestoneId: 'demo-milestone-planned-approval',
+      title: 'Lock finish schedule after client sign-off',
+      description: 'Prepare tentative mobilization schedule once the client confirms the selected finish package.',
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: at('2026-04-08T16:00:00.000Z'),
+      startedAt: null,
+      completedAt: null,
+      assignedToAdminId: staffIds.operations,
+      createdByAdminId: adminId,
+      createdAt: at('2026-03-28T17:25:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-active-1',
+      deliveryProjectId: 'demo-project-active',
+      projectMilestoneId: 'demo-milestone-active-roof',
+      title: 'Install roof trusses and bracing',
+      description: 'Complete truss installation and confirm final bracing inspection.',
+      status: 'IN_PROGRESS',
+      priority: 'HIGH',
+      dueDate: at('2026-04-02T16:00:00.000Z'),
+      startedAt: at('2026-03-30T07:30:00.000Z'),
+      completedAt: null,
+      assignedToAdminId: staffIds.site,
+      createdByAdminId: staffIds.operations,
+      createdAt: at('2026-03-29T14:10:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-active-2',
+      deliveryProjectId: 'demo-project-active',
+      projectMilestoneId: 'demo-milestone-active-roof',
+      title: 'Approve top-up reinforcement order',
+      description: 'Structural engineer requested additional reinforcement at service edge.',
+      status: 'BLOCKED',
+      priority: 'URGENT',
+      dueDate: at('2026-03-31T16:00:00.000Z'),
+      startedAt: at('2026-03-28T09:00:00.000Z'),
+      completedAt: null,
+      assignedToAdminId: staffIds.operations,
+      createdByAdminId: staffIds.site,
+      createdAt: at('2026-03-28T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-active-3',
+      deliveryProjectId: 'demo-project-active',
+      projectMilestoneId: 'demo-milestone-active-finishes',
+      title: 'Confirm floor tile selection with client',
+      description: 'Needed before finishes procurement can be released.',
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: at('2026-04-09T16:00:00.000Z'),
+      startedAt: null,
+      completedAt: null,
+      assignedToAdminId: staffIds.operations,
+      createdByAdminId: staffIds.operations,
+      createdAt: at('2026-03-30T11:25:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-active-4',
+      deliveryProjectId: 'demo-project-active',
+      projectMilestoneId: 'demo-milestone-active-shell',
+      title: 'Complete shell quality snag review',
+      description: 'Shell inspection completed and signed off.',
+      status: 'DONE',
+      priority: 'MEDIUM',
+      dueDate: at('2026-03-23T16:00:00.000Z'),
+      startedAt: at('2026-03-22T14:00:00.000Z'),
+      completedAt: at('2026-03-23T12:30:00.000Z'),
+      assignedToAdminId: staffIds.site,
+      createdByAdminId: staffIds.operations,
+      createdAt: at('2026-03-22T14:00:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-completed-1',
+      deliveryProjectId: 'demo-project-completed',
+      projectMilestoneId: 'demo-milestone-completed-mobilize',
+      title: 'Complete demolition and prep package',
+      description: 'Cleared for fit-out start.',
+      status: 'DONE',
+      priority: 'HIGH',
+      dueDate: at('2025-12-05T16:00:00.000Z'),
+      startedAt: at('2025-11-30T08:00:00.000Z'),
+      completedAt: at('2025-12-05T15:30:00.000Z'),
+      assignedToAdminId: staffIds.site,
+      createdByAdminId: adminId,
+      createdAt: at('2025-11-30T08:00:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-completed-2',
+      deliveryProjectId: 'demo-project-completed',
+      projectMilestoneId: 'demo-milestone-completed-fitout',
+      title: 'Install reception joinery',
+      description: 'Reception desk and storage units installed.',
+      status: 'DONE',
+      priority: 'MEDIUM',
+      dueDate: at('2026-01-21T16:00:00.000Z'),
+      startedAt: at('2026-01-19T08:00:00.000Z'),
+      completedAt: at('2026-01-21T14:45:00.000Z'),
+      assignedToAdminId: staffIds.site,
+      createdByAdminId: adminId,
+      createdAt: at('2026-01-19T08:00:00.000Z'),
+    },
+    {
+      id: 'demo-site-task-completed-3',
+      deliveryProjectId: 'demo-project-completed',
+      projectMilestoneId: 'demo-milestone-completed-handover',
+      title: 'Final clinic signage touch-up',
+      description: 'Scope removed after client kept existing signage.',
+      status: 'CANCELLED',
+      priority: 'LOW',
+      dueDate: at('2026-02-20T16:00:00.000Z'),
+      startedAt: null,
+      completedAt: null,
+      assignedToAdminId: adminId,
+      createdByAdminId: adminId,
+      createdAt: at('2026-02-10T10:15:00.000Z'),
+    },
+  ];
+
+  const siteLogs = [
+    {
+      id: 'demo-site-log-planned-1',
+      deliveryProjectId: 'demo-project-planned',
+      logDate: at('2026-03-24T16:00:00.000Z'),
+      summary: 'Initial site measure completed',
+      workCompleted: 'Measured kitchen extension line and patio footprint for revised quote update.',
+      issuesRisks: 'Waiting on client decision between standard and premium finish package.',
+      nextSteps: 'Issue revised quote with updated patio steel allowance.',
+      weatherConditions: 'Clear and dry',
+      attachmentUrls: [BRAND_IMAGES.blueprint],
+      clientVisible: false,
+      createdByAdminId: adminId,
+      createdAt: at('2026-03-24T16:10:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-planned-2',
+      deliveryProjectId: 'demo-project-planned',
+      logDate: at('2026-03-28T15:30:00.000Z'),
+      summary: 'Revision meeting held with client',
+      workCompleted: 'Reviewed cabinetry option, patio changes, and tentative mobilization window.',
+      issuesRisks: 'Final approval still pending before procurement can move.',
+      nextSteps: 'Send revised pricing and hold April mobilization slot for 5 days.',
+      weatherConditions: 'Cloud cover with no site impact',
+      attachmentUrls: [],
+      clientVisible: false,
+      createdByAdminId: adminId,
+      createdAt: at('2026-03-28T15:45:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-active-1',
+      deliveryProjectId: 'demo-project-active',
+      logDate: at('2026-03-20T17:00:00.000Z'),
+      summary: 'Shell package closed and roof prep started',
+      workCompleted: 'Masonry works completed and roof plate checks signed off.',
+      issuesRisks: 'Reinforcement top-up needed near service edge before next pour.',
+      nextSteps: 'Receive truss package and complete weather-tight stage.',
+      weatherConditions: 'Warm with light wind',
+      attachmentUrls: [BRAND_IMAGES.scaffold],
+      clientVisible: false,
+      createdByAdminId: staffIds.site,
+      createdAt: at('2026-03-20T17:10:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-active-2',
+      deliveryProjectId: 'demo-project-active',
+      logDate: at('2026-03-24T17:00:00.000Z'),
+      summary: 'Roof delivery confirmed and offload area prepared',
+      workCompleted: 'Prepared roof material staging zone and confirmed crane access window.',
+      issuesRisks: 'Top-up reinforcement approval is still outstanding.',
+      nextSteps: 'Begin truss installation once supplier offloads tomorrow morning.',
+      weatherConditions: 'Dry and suitable for delivery',
+      attachmentUrls: [BRAND_IMAGES.roofing],
+      clientVisible: false,
+      createdByAdminId: staffIds.site,
+      createdAt: at('2026-03-24T17:05:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-active-3',
+      deliveryProjectId: 'demo-project-active',
+      logDate: at('2026-03-30T17:00:00.000Z'),
+      summary: 'Roofing crew mobilized and installation started',
+      workCompleted: 'Truss installation commenced and first roof sections are now fixed in place.',
+      issuesRisks: 'Material approval blocker remains open for the additional reinforcement request.',
+      nextSteps: 'Continue roofing sequence and resolve reinforcement approval with operations manager.',
+      weatherConditions: 'Clear with moderate wind',
+      attachmentUrls: [BRAND_IMAGES.roofing, BRAND_IMAGES.scaffold],
+      clientVisible: false,
+      createdByAdminId: staffIds.site,
+      createdAt: at('2026-03-30T17:20:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-completed-1',
+      deliveryProjectId: 'demo-project-completed',
+      logDate: at('2025-12-05T16:30:00.000Z'),
+      summary: 'Demolition and prep works complete',
+      workCompleted: 'Existing finishes removed and fit-out zones cleared for new works.',
+      issuesRisks: 'No major issues raised.',
+      nextSteps: 'Move into partitioning and reception prep.',
+      weatherConditions: 'Indoor works only',
+      attachmentUrls: [],
+      clientVisible: false,
+      createdByAdminId: staffIds.site,
+      createdAt: at('2025-12-05T16:35:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-completed-2',
+      deliveryProjectId: 'demo-project-completed',
+      logDate: at('2026-01-18T16:45:00.000Z'),
+      summary: 'Flooring and paint package on schedule',
+      workCompleted: 'Floor tile installation is 80 percent complete and final paint coats are underway.',
+      issuesRisks: 'One consultation room ceiling board needed replacement.',
+      nextSteps: 'Close paint package and start final snag walk-through.',
+      weatherConditions: 'Indoor works only',
+      attachmentUrls: [BRAND_IMAGES.commercialInterior],
+      clientVisible: false,
+      createdByAdminId: staffIds.site,
+      createdAt: at('2026-01-18T16:50:00.000Z'),
+    },
+    {
+      id: 'demo-site-log-completed-3',
+      deliveryProjectId: 'demo-project-completed',
+      logDate: at('2026-02-28T15:30:00.000Z'),
+      summary: 'Final snagging closed and handover signed',
+      workCompleted: 'All defects closed, client sign-off received, and final clean completed.',
+      issuesRisks: 'No open issues remain.',
+      nextSteps: 'Archive project records and request testimonial.',
+      weatherConditions: 'Indoor works only',
+      attachmentUrls: [BRAND_IMAGES.blueprint],
+      clientVisible: false,
+      createdByAdminId: adminId,
+      createdAt: at('2026-02-28T15:40:00.000Z'),
+    },
+  ];
+
+  const invoices = [
+    {
+      id: 'demo-invoice-active-deposit',
+      invoiceNumber: 'INV-DEMO-2026-001',
+      title: 'Mobilization and site establishment deposit',
+      description: 'Deposit invoice issued after quote approval and project activation.',
+      billingType: 'DEPOSIT',
+      status: 'PARTIALLY_PAID',
+      clientVisible: true,
+      leadId: 'demo-lead-active',
+      quoteRequestId: 'demo-quote-active',
+      deliveryProjectId: 'demo-project-active',
+      projectMilestoneId: 'demo-milestone-active-kickoff',
+      issuedByAdminId: staffIds.accounts,
+      issuedAt: at('2026-02-20T10:00:00.000Z'),
+      dueDate: at('2026-02-27T16:00:00.000Z'),
+      subtotal: money(180000),
+      tax: money(27000),
+      total: money(207000),
+      notes: 'Deposit supports mobilization, preliminaries, and early substructure works.',
+      paymentInstructions:
+        'Please use the invoice number as your payment reference and send proof of payment to accounts@elchananconstruction.co.za.',
+      footerNote: 'Thank you for your prompt payment and continued trust.',
+      clientViewedAt: at('2026-02-21T08:40:00.000Z'),
+      clientViewedByClientUserId: 'demo-client-primary',
+      paidAt: null,
+      voidedAt: null,
+      cancelledAt: null,
+      createdAt: at('2026-02-20T10:00:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-active-progress',
+      invoiceNumber: 'INV-DEMO-2026-004',
+      title: 'Progress claim 01 - shell and roof package',
+      description: 'First progress claim for structural shell completion and roofing mobilization.',
+      billingType: 'MILESTONE',
+      status: 'ISSUED',
+      clientVisible: true,
+      leadId: 'demo-lead-active',
+      quoteRequestId: 'demo-quote-active',
+      deliveryProjectId: 'demo-project-active',
+      projectMilestoneId: 'demo-milestone-active-shell',
+      issuedByAdminId: staffIds.accounts,
+      issuedAt: at('2026-03-26T11:00:00.000Z'),
+      dueDate: at('2026-04-05T16:00:00.000Z'),
+      subtotal: money(277000),
+      tax: money(41550),
+      total: money(318550),
+      notes: 'Issued after shell completion and before roof package closes.',
+      paymentInstructions:
+        'Payment is due within ten calendar days. Please contact accounts for staged cash flow planning if needed.',
+      footerNote: 'Issued in line with the signed project payment schedule.',
+      clientViewedAt: at('2026-03-27T09:45:00.000Z'),
+      clientViewedByClientUserId: 'demo-client-primary',
+      paidAt: null,
+      voidedAt: null,
+      cancelledAt: null,
+      createdAt: at('2026-03-26T11:00:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-completed-deposit',
+      invoiceNumber: 'INV-DEMO-2025-019',
+      title: 'Clinic fit-out mobilization deposit',
+      description: 'Initial deposit for demolition, site prep, and early procurement.',
+      billingType: 'DEPOSIT',
+      status: 'PAID',
+      clientVisible: true,
+      leadId: 'demo-lead-completed',
+      quoteRequestId: 'demo-quote-completed',
+      deliveryProjectId: 'demo-project-completed',
+      projectMilestoneId: 'demo-milestone-completed-mobilize',
+      issuedByAdminId: staffIds.accounts,
+      issuedAt: at('2025-11-28T10:00:00.000Z'),
+      dueDate: at('2025-12-05T16:00:00.000Z'),
+      subtotal: money(200000),
+      tax: money(30000),
+      total: money(230000),
+      notes: 'Deposit cleared before site shutdown window opened.',
+      paymentInstructions:
+        'Please use the invoice number as your payment reference and share proof of payment for allocation.',
+      footerNote: 'Thank you for supporting a smooth mobilization start.',
+      clientViewedAt: at('2025-11-29T08:20:00.000Z'),
+      clientViewedByClientUserId: 'demo-client-secondary',
+      paidAt: at('2025-12-05T12:20:00.000Z'),
+      voidedAt: null,
+      cancelledAt: null,
+      createdAt: at('2025-11-28T10:00:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-completed-final',
+      invoiceNumber: 'INV-DEMO-2026-002',
+      title: 'Final fit-out claim and handover balance',
+      description: 'Final claim covering finishes completion, snagging, and handover closeout.',
+      billingType: 'FINAL',
+      status: 'PAID',
+      clientVisible: true,
+      leadId: 'demo-lead-completed',
+      quoteRequestId: 'demo-quote-completed',
+      deliveryProjectId: 'demo-project-completed',
+      projectMilestoneId: 'demo-milestone-completed-handover',
+      issuedByAdminId: staffIds.accounts,
+      issuedAt: at('2026-02-20T09:00:00.000Z'),
+      dueDate: at('2026-02-28T16:00:00.000Z'),
+      subtotal: money(363478.26),
+      tax: money(54521.74),
+      total: money(418000),
+      notes: 'Final account including snagging closeout and handover pack.',
+      paymentInstructions:
+        'Please settle the final balance before handover sign-off. Proof of payment secures document release.',
+      footerNote: 'Final account paid in full. Thank you for partnering with Elchanan Construction.',
+      clientViewedAt: at('2026-02-21T10:10:00.000Z'),
+      clientViewedByClientUserId: 'demo-client-secondary',
+      paidAt: at('2026-02-28T11:45:00.000Z'),
+      voidedAt: null,
+      cancelledAt: null,
+      createdAt: at('2026-02-20T09:00:00.000Z'),
+    },
+  ];
+
+  const invoiceLineItems = [
+    {
+      id: 'demo-invoice-line-active-deposit-1',
+      invoiceId: 'demo-invoice-active-deposit',
+      description: 'Site establishment, preliminaries, and temporary services',
+      quantity: 1,
+      unitPrice: money(120000),
+      amount: money(120000),
+      sortOrder: 1,
+      createdAt: at('2026-02-20T10:01:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-line-active-deposit-2',
+      invoiceId: 'demo-invoice-active-deposit',
+      description: 'Substructure mobilization and early material deposits',
+      quantity: 1,
+      unitPrice: money(60000),
+      amount: money(60000),
+      sortOrder: 2,
+      createdAt: at('2026-02-20T10:02:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-line-active-progress-1',
+      invoiceId: 'demo-invoice-active-progress',
+      description: 'Structural shell completion claim',
+      quantity: 1,
+      unitPrice: money(215000),
+      amount: money(215000),
+      sortOrder: 1,
+      createdAt: at('2026-03-26T11:01:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-line-active-progress-2',
+      invoiceId: 'demo-invoice-active-progress',
+      description: 'Roof package mobilization and truss installation',
+      quantity: 1,
+      unitPrice: money(62000),
+      amount: money(62000),
+      sortOrder: 2,
+      createdAt: at('2026-03-26T11:02:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-line-completed-deposit-1',
+      invoiceId: 'demo-invoice-completed-deposit',
+      description: 'Demolition, prep, and early procurement deposit',
+      quantity: 1,
+      unitPrice: money(200000),
+      amount: money(200000),
+      sortOrder: 1,
+      createdAt: at('2025-11-28T10:01:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-line-completed-final-1',
+      invoiceId: 'demo-invoice-completed-final',
+      description: 'Flooring, paint, and consultation room finishes',
+      quantity: 1,
+      unitPrice: money(238000),
+      amount: money(238000),
+      sortOrder: 1,
+      createdAt: at('2026-02-20T09:01:00.000Z'),
+    },
+    {
+      id: 'demo-invoice-line-completed-final-2',
+      invoiceId: 'demo-invoice-completed-final',
+      description: 'Reception joinery, snagging, and handover closeout',
+      quantity: 1,
+      unitPrice: money(125478.26),
+      amount: money(125478.26),
+      sortOrder: 2,
+      createdAt: at('2026-02-20T09:02:00.000Z'),
+    },
+  ];
+
+  const payments = [
+    {
+      id: 'demo-payment-active-deposit',
+      invoiceId: 'demo-invoice-active-deposit',
+      amount: money(125000),
+      paymentDate: at('2026-02-25T13:15:00.000Z'),
+      paymentReference: 'PAY-DEMO-2026-001',
+      notes: 'Partial deposit payment received to confirm mobilization.',
+      method: 'BANK_TRANSFER',
+      recordedByAdminId: staffIds.accounts,
+      createdAt: at('2026-02-25T13:15:00.000Z'),
+    },
+    {
+      id: 'demo-payment-completed-deposit',
+      invoiceId: 'demo-invoice-completed-deposit',
+      amount: money(230000),
+      paymentDate: at('2025-12-05T12:20:00.000Z'),
+      paymentReference: 'PAY-DEMO-2025-019',
+      notes: 'Deposit paid in full before fit-out shutdown window.',
+      method: 'BANK_TRANSFER',
+      recordedByAdminId: staffIds.accounts,
+      createdAt: at('2025-12-05T12:20:00.000Z'),
+    },
+    {
+      id: 'demo-payment-completed-final',
+      invoiceId: 'demo-invoice-completed-final',
+      amount: money(418000),
+      paymentDate: at('2026-02-28T11:45:00.000Z'),
+      paymentReference: 'PAY-DEMO-2026-002',
+      notes: 'Final handover balance paid before document release.',
+      method: 'BANK_TRANSFER',
+      recordedByAdminId: staffIds.accounts,
+      createdAt: at('2026-02-28T11:45:00.000Z'),
+    },
+  ];
+
+  const portalDocuments = [
+    {
+      id: 'demo-doc-active-quote',
+      title: 'Approved quotation - Khumalo residence',
+      description: 'Client-ready quotation document for the active project.',
+      type: 'QUOTE',
+      url: '/portal/quotes/demo-quote-active/document?print=1',
+      fileName: 'QT-DEMO-2026-002.pdf',
+      mimeType: 'application/pdf',
+      bytes: null,
+      clientVisible: true,
+      approvalStatus: 'APPROVED',
+      clientViewedAt: at('2026-02-17T09:20:00.000Z'),
+      clientRespondedAt: at('2026-02-18T11:20:00.000Z'),
+      clientResponseNote: 'Approved via portal response.',
+      clientRespondedByClientUserId: 'demo-client-primary',
+      sortOrder: 1,
+      leadId: 'demo-lead-active',
+      quoteRequestId: 'demo-quote-active',
+      deliveryProjectId: 'demo-project-active',
+      uploadedByAdminId: staffIds.operations,
+      createdAt: at('2026-02-16T08:35:00.000Z'),
+    },
+    {
+      id: 'demo-doc-active-contract',
+      title: 'Site mobilization agreement',
+      description: 'Signed agreement covering start date, billing sequence, and mobilization scope.',
+      type: 'CONTRACT',
+      url: BRAND_IMAGES.blueprint,
+      fileName: 'site-mobilization-agreement.pdf',
+      mimeType: 'application/pdf',
+      bytes: null,
+      clientVisible: true,
+      approvalStatus: 'APPROVED',
+      clientViewedAt: at('2026-02-18T11:25:00.000Z'),
+      clientRespondedAt: at('2026-02-18T11:20:00.000Z'),
+      clientResponseNote: 'Accepted alongside the approved quote.',
+      clientRespondedByClientUserId: 'demo-client-primary',
+      sortOrder: 2,
+      leadId: 'demo-lead-active',
+      quoteRequestId: 'demo-quote-active',
+      deliveryProjectId: 'demo-project-active',
+      uploadedByAdminId: adminId,
+      createdAt: at('2026-02-18T12:00:00.000Z'),
+    },
+    {
+      id: 'demo-doc-active-scope',
+      title: 'Active project scope summary',
+      description: 'Shared scope snapshot and latest approved selections.',
+      type: 'SCOPE_DOCUMENT',
+      url: BRAND_IMAGES.blueprint,
+      fileName: 'active-project-scope-summary.pdf',
+      mimeType: 'application/pdf',
+      bytes: null,
+      clientVisible: true,
+      approvalStatus: 'VIEWED',
+      clientViewedAt: at('2026-03-25T09:00:00.000Z'),
+      clientRespondedAt: null,
+      clientResponseNote: null,
+      clientRespondedByClientUserId: null,
+      sortOrder: 3,
+      leadId: 'demo-lead-active',
+      quoteRequestId: null,
+      deliveryProjectId: 'demo-project-active',
+      uploadedByAdminId: staffIds.operations,
+      createdAt: at('2026-03-24T16:00:00.000Z'),
+    },
+    {
+      id: 'demo-doc-active-photo',
+      title: 'Progress photo - roof mobilization',
+      description: 'Client-visible image shared after the latest update.',
+      type: 'IMAGE',
+      url: BRAND_IMAGES.roofing,
+      fileName: 'roof-progress.jpg',
+      mimeType: 'image/jpeg',
+      bytes: null,
+      clientVisible: true,
+      approvalStatus: 'SENT',
+      clientViewedAt: at('2026-03-30T15:00:00.000Z'),
+      clientRespondedAt: null,
+      clientResponseNote: null,
+      clientRespondedByClientUserId: null,
+      sortOrder: 4,
+      leadId: 'demo-lead-active',
+      quoteRequestId: null,
+      deliveryProjectId: 'demo-project-active',
+      uploadedByAdminId: staffIds.site,
+      createdAt: at('2026-03-30T14:15:00.000Z'),
+    },
+    {
+      id: 'demo-doc-completed-quote',
+      title: 'Approved quotation - Meridian Medical Rooms',
+      description: 'Approved commercial fit-out quotation.',
+      type: 'QUOTE',
+      url: '/portal/quotes/demo-quote-completed/document?print=1',
+      fileName: 'QT-DEMO-2025-014.pdf',
+      mimeType: 'application/pdf',
+      bytes: null,
+      clientVisible: true,
+      approvalStatus: 'APPROVED',
+      clientViewedAt: at('2025-11-23T09:30:00.000Z'),
+      clientRespondedAt: at('2025-11-25T15:40:00.000Z'),
+      clientResponseNote: 'Approved for scheduling.',
+      clientRespondedByClientUserId: 'demo-client-secondary',
+      sortOrder: 1,
+      leadId: 'demo-lead-completed',
+      quoteRequestId: 'demo-quote-completed',
+      deliveryProjectId: 'demo-project-completed',
+      uploadedByAdminId: adminId,
+      createdAt: at('2025-11-22T13:15:00.000Z'),
+    },
+    {
+      id: 'demo-doc-completed-handover',
+      title: 'Handover pack and warranty summary',
+      description: 'Final handover document shared after project completion.',
+      type: 'PROJECT',
+      url: BRAND_IMAGES.blueprint,
+      fileName: 'handover-pack.pdf',
+      mimeType: 'application/pdf',
+      bytes: null,
+      clientVisible: true,
+      approvalStatus: 'APPROVED',
+      clientViewedAt: at('2026-03-02T09:20:00.000Z'),
+      clientRespondedAt: null,
+      clientResponseNote: null,
+      clientRespondedByClientUserId: null,
+      sortOrder: 2,
+      leadId: 'demo-lead-completed',
+      quoteRequestId: null,
+      deliveryProjectId: 'demo-project-completed',
+      uploadedByAdminId: adminId,
+      createdAt: at('2026-02-28T16:25:00.000Z'),
+    },
+  ];
+
+  const followUpTasks = [
+    {
+      id: 'demo-followup-pending-revision',
+      title: 'Send revised patio allowance to Ayanda',
+      description: 'Finalize and send the revised quote option for the pending extension project.',
+      status: 'OPEN',
+      priority: 'HIGH',
+      dueAt: at('2026-04-02T16:00:00.000Z'),
+      startedAt: null,
+      completedAt: null,
+      assignedToAdminId: adminId,
+      createdByAdminId: adminId,
+      leadId: 'demo-lead-pending',
+      enquiryId: 'demo-enquiry-pending',
+      quoteRequestId: 'demo-quote-pending',
+      deliveryProjectId: null,
+      deletedAt: null,
+      createdAt: at('2026-03-29T12:00:00.000Z'),
+    },
+    {
+      id: 'demo-followup-active-payment',
+      title: 'Review progress claim with client',
+      description: 'Call Naledi to confirm receipt of the first progress invoice and next milestone date.',
+      status: 'IN_PROGRESS',
+      priority: 'MEDIUM',
+      dueAt: at('2026-04-03T14:00:00.000Z'),
+      startedAt: at('2026-04-01T09:10:00.000Z'),
+      completedAt: null,
+      assignedToAdminId: adminId,
+      createdByAdminId: staffIds.accounts,
+      leadId: 'demo-lead-active',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-active',
+      deliveryProjectId: 'demo-project-active',
+      deletedAt: null,
+      createdAt: at('2026-04-01T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-followup-completed-review',
+      title: 'Confirm testimonial approval for Meridian project',
+      description: 'Client approved the review copy and it can remain featured.',
+      status: 'DONE',
+      priority: 'LOW',
+      dueAt: at('2026-03-05T16:00:00.000Z'),
+      startedAt: at('2026-03-05T09:00:00.000Z'),
+      completedAt: at('2026-03-05T11:20:00.000Z'),
+      assignedToAdminId: adminId,
+      createdByAdminId: adminId,
+      leadId: 'demo-lead-completed',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-completed',
+      deliveryProjectId: 'demo-project-completed',
+      deletedAt: null,
+      createdAt: at('2026-03-05T09:00:00.000Z'),
+    },
+  ];
+
+  const communicationLogs = [
+    {
+      id: 'demo-comm-pending-whatsapp',
+      channel: 'WHATSAPP',
+      direction: 'OUTBOUND',
+      subject: 'Quote revision update',
+      message: 'Shared timeline for revised patio allowance and finish option update.',
+      occurredAt: at('2026-03-29T11:30:00.000Z'),
+      actorName: ADMIN_NAME,
+      actorEmail: ADMIN_EMAIL,
+      enquiryId: 'demo-enquiry-pending',
+      quoteRequestId: 'demo-quote-pending',
+      leadId: 'demo-lead-pending',
+      deliveryProjectId: null,
+      actorAdminId: adminId,
+      createdAt: at('2026-03-29T11:30:00.000Z'),
+    },
+    {
+      id: 'demo-comm-active-call',
+      channel: 'CALL',
+      direction: 'OUTBOUND',
+      subject: 'Progress claim check-in',
+      message: 'Called client to walk through the first progress invoice and roofing milestone status.',
+      occurredAt: at('2026-03-31T10:20:00.000Z'),
+      actorName: 'Accounts Coordinator',
+      actorEmail: 'accounts@elchananconstruction.co.za',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-active',
+      leadId: 'demo-lead-active',
+      deliveryProjectId: 'demo-project-active',
+      actorAdminId: staffIds.accounts,
+      createdAt: at('2026-03-31T10:20:00.000Z'),
+    },
+    {
+      id: 'demo-comm-completed-email',
+      channel: 'EMAIL',
+      direction: 'OUTBOUND',
+      subject: 'Handover pack shared',
+      message: 'Shared the final handover summary and warranty notes after payment cleared.',
+      occurredAt: at('2026-02-28T16:30:00.000Z'),
+      actorName: ADMIN_NAME,
+      actorEmail: ADMIN_EMAIL,
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-completed',
+      leadId: 'demo-lead-completed',
+      deliveryProjectId: 'demo-project-completed',
+      actorAdminId: adminId,
+      createdAt: at('2026-02-28T16:30:00.000Z'),
+    },
+  ];
+
+  const activityLogs = [
+    {
+      id: 'demo-activity-pending-enquiry',
+      type: 'ENQUIRY_SUBMITTED',
+      title: 'Pending quote enquiry captured',
+      description: 'Ayanda Mokoena submitted a kitchen extension and patio enquiry.',
+      metadata: { referenceCode: 'ENQ-DEMO-2026-001' },
+      actorAdminId: adminId,
+      leadId: 'demo-lead-pending',
+      enquiryId: 'demo-enquiry-pending',
+      quoteRequestId: null,
+      taskId: null,
+      deliveryProjectId: null,
+      createdAt: at('2026-03-23T10:00:00.000Z'),
+    },
+    {
+      id: 'demo-activity-pending-quote',
+      type: 'QUOTE_REQUESTED',
+      title: 'Pending quote issued',
+      description: 'Revised extension quote shared and awaiting approval.',
+      metadata: { referenceCode: 'QT-DEMO-2026-001' },
+      actorAdminId: adminId,
+      leadId: 'demo-lead-pending',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-pending',
+      taskId: null,
+      deliveryProjectId: null,
+      createdAt: at('2026-03-27T15:15:00.000Z'),
+    },
+    {
+      id: 'demo-activity-active-won',
+      type: 'QUOTE_WON',
+      title: 'Active project quote approved',
+      description: 'Khumalo residence quote accepted and scheduled for delivery.',
+      metadata: { referenceCode: 'QT-DEMO-2026-002' },
+      actorAdminId: staffIds.operations,
+      leadId: 'demo-lead-active',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-active',
+      taskId: null,
+      deliveryProjectId: null,
+      createdAt: at('2026-02-18T11:20:00.000Z'),
+    },
+    {
+      id: 'demo-activity-active-project',
+      type: 'PROJECT_CONVERTED',
+      title: 'Active delivery project created',
+      description: 'Khumalo Family Residence moved into active project delivery.',
+      metadata: { projectCode: 'ECC-ACT-2026-002' },
+      actorAdminId: staffIds.operations,
+      leadId: 'demo-lead-active',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-active',
+      taskId: null,
+      deliveryProjectId: 'demo-project-active',
+      createdAt: at('2026-02-19T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-activity-completed-project',
+      type: 'TASK_COMPLETED',
+      title: 'Completed project handed over',
+      description: 'Meridian Medical Rooms Upgrade closed successfully.',
+      metadata: { projectCode: 'ECC-CMP-2025-014' },
+      actorAdminId: adminId,
+      leadId: 'demo-lead-completed',
+      enquiryId: null,
+      quoteRequestId: 'demo-quote-completed',
+      taskId: 'demo-followup-completed-review',
+      deliveryProjectId: 'demo-project-completed',
+      createdAt: at('2026-02-28T16:20:00.000Z'),
+    },
+  ];
+
+  const reviews = [
+    {
+      id: 'demo-review-completed',
+      name: 'Pieter van der Merwe',
+      email: 'pieter.vdm@example.com',
+      rating: 5,
+      projectContext: 'Meridian Medical Rooms Upgrade',
+      title: 'Strong delivery from quote to handover',
+      message:
+        'The team handled planning, site control, and final handover professionally. Billing stayed transparent and we always knew what stage the project was in.',
+      consentGiven: true,
+      status: 'APPROVED',
+      featured: true,
+      sourceIpHash: 'demo-review-completed',
+      createdAt: at('2026-03-05T10:00:00.000Z'),
+    },
+    {
+      id: 'demo-review-public-1',
+      name: 'Lebogang M.',
+      email: 'lebogang.m@example.com',
+      rating: 5,
+      projectContext: 'Residential renovation',
+      title: 'Clear communication and excellent finishing',
+      message:
+        'We appreciated the constant updates, neat site management, and the quality of the final finishes.',
+      consentGiven: true,
+      status: 'APPROVED',
+      featured: true,
+      sourceIpHash: 'demo-review-public-1',
+      createdAt: at('2026-02-10T12:00:00.000Z'),
+    },
+    {
+      id: 'demo-review-pending',
+      name: 'Mpho D.',
+      email: 'mpho.d@example.com',
+      rating: 4,
+      projectContext: 'Boundary wall and paving',
+      title: 'Good coordination and workmanship',
+      message:
+        'The workmanship was solid and the team helped us compare material options clearly throughout the job.',
+      consentGiven: true,
+      status: 'PENDING',
+      featured: false,
+      sourceIpHash: 'demo-review-pending',
+      createdAt: at('2026-03-29T10:30:00.000Z'),
+    },
+  ];
+
+  const mediaAssets = [
+    {
+      id: 'demo-media-hero',
+      name: 'Construction site hero',
+      url: BRAND_IMAGES.hero,
+      type: 'image',
+      storagePath: BRAND_IMAGES.hero,
+      mimeType: 'image/jpeg',
+      altText: 'Commercial construction site with crane and active works',
+      bytes: 0,
+      metadata: { source: 'local-demo-asset' },
+      description: 'Primary hero image used across the public site.',
+      uploadedByAdminId: staffIds.content,
+      createdAt: at('2026-03-18T09:00:00.000Z'),
+    },
+    {
+      id: 'demo-media-blueprint',
+      name: 'Blueprint planning image',
+      url: BRAND_IMAGES.blueprint,
+      type: 'image',
+      storagePath: BRAND_IMAGES.blueprint,
+      mimeType: 'image/jpeg',
+      altText: 'Construction plans and blueprint documents on a table',
+      bytes: 0,
+      metadata: { source: 'local-demo-asset' },
+      description: 'Planning and preconstruction support visual.',
+      uploadedByAdminId: staffIds.content,
+      createdAt: at('2026-03-18T09:05:00.000Z'),
+    },
+    {
+      id: 'demo-media-roof',
+      name: 'Roofing progress image',
+      url: BRAND_IMAGES.roofing,
+      type: 'image',
+      storagePath: BRAND_IMAGES.roofing,
+      mimeType: 'image/jpeg',
+      altText: 'Roofing crew working on a residential roof installation',
+      bytes: 0,
+      metadata: { source: 'local-demo-asset' },
+      description: 'Operations and progress-reporting image used in the active project demo.',
+      uploadedByAdminId: staffIds.site,
+      createdAt: at('2026-03-30T14:20:00.000Z'),
+    },
+    {
+      id: 'demo-media-commercial',
+      name: 'Commercial fit-out interior',
+      url: BRAND_IMAGES.commercialInterior,
+      type: 'image',
+      storagePath: BRAND_IMAGES.commercialInterior,
+      mimeType: 'image/jpeg',
+      altText: 'Finished commercial interior space',
+      bytes: 0,
+      metadata: { source: 'local-demo-asset' },
+      description: 'Completed commercial project visual for portfolio and review sections.',
+      uploadedByAdminId: staffIds.content,
+      createdAt: at('2026-02-28T16:00:00.000Z'),
+    },
+  ];
+
+  const newsletterSubscribers = [
+    {
+      id: 'demo-newsletter-1',
       email: 'updates@example.com',
       source: 'Homepage CTA',
       subscribed: true,
+      createdAt: at('2026-03-15T09:20:00.000Z'),
     },
-  });
+  ];
 
-  const existing = await prisma.auditLog.findFirst({
-    where: {
+  await upsertManyById(prisma.projectAssignment, projectAssignments);
+  await upsertManyById(prisma.projectMilestone, projectMilestones);
+  await upsertManyById(prisma.projectUpdate, projectUpdates);
+  await upsertManyById(prisma.projectProcurementItem, procurementItems);
+  await upsertManyById(prisma.purchaseRequest, purchaseRequests);
+  await upsertManyById(prisma.purchaseRequestLineItem, purchaseRequestLineItems);
+  await upsertManyById(prisma.siteTask, siteTasks);
+  await upsertManyById(prisma.siteLog, siteLogs);
+  await upsertManyById(prisma.invoice, invoices);
+  await upsertManyById(prisma.invoiceLineItem, invoiceLineItems);
+  await upsertManyById(prisma.payment, payments);
+  await upsertManyById(prisma.portalDocument, portalDocuments);
+  await upsertManyById(prisma.followUpTask, followUpTasks);
+  await upsertManyById(prisma.communicationLog, communicationLogs);
+  await upsertManyById(prisma.activityLog, activityLogs);
+  await upsertManyById(prisma.review, reviews);
+  await upsertManyById(prisma.mediaAsset, mediaAssets);
+  await upsertManyById(prisma.newsletterSubscriber, newsletterSubscribers);
+}
+
+async function seedAuditLog(adminId) {
+  await prisma.auditLog.upsert({
+    where: { id: 'demo-audit-bootstrap' },
+    update: {
+      actor: ADMIN_EMAIL,
       action: 'SEED_BOOTSTRAP',
       entity: 'SYSTEM',
-      entityId: 'INITIAL_SETUP',
+      entityId: 'DEMO_DATASET',
+      details: {
+        mode: shouldResetDemoData ? 'reset-and-seed' : 'upsert-only',
+        note: 'Deterministic demo dataset prepared for end-to-end construction workflow storytelling.',
+      },
+      actorAdminId: adminId,
+      createdAt: at('2026-04-01T08:00:00.000Z'),
+    },
+    create: {
+      id: 'demo-audit-bootstrap',
+      actor: ADMIN_EMAIL,
+      action: 'SEED_BOOTSTRAP',
+      entity: 'SYSTEM',
+      entityId: 'DEMO_DATASET',
+      details: {
+        mode: shouldResetDemoData ? 'reset-and-seed' : 'upsert-only',
+        note: 'Deterministic demo dataset prepared for end-to-end construction workflow storytelling.',
+      },
+      actorAdminId: adminId,
+      createdAt: at('2026-04-01T08:00:00.000Z'),
     },
   });
+}
 
-  if (!existing) {
-    await prisma.auditLog.create({
-      data: {
-        actor: ADMIN_EMAIL,
-        action: 'SEED_BOOTSTRAP',
-        entity: 'SYSTEM',
-        entityId: 'INITIAL_SETUP',
-        actorAdminId: adminUserId,
-        details: {
-          note: 'Initial seed baseline completed for full-stack construction platform.',
-        },
-      },
-    });
-  }
+function printSummary() {
+  console.log('');
+  console.log('Demo dataset ready.');
+  console.log(`Admin login: ${ADMIN_EMAIL}`);
+  console.log('Admin password: value of SEED_ADMIN_PASSWORD');
+  console.log(`Primary portal login: ${PORTAL_EMAIL}`);
+  console.log('Primary portal password: value of SEED_PORTAL_PASSWORD');
+  console.log(`Secondary portal login: ${SECONDARY_PORTAL_EMAIL}`);
+  console.log('Secondary portal password: value of E2E_PORTAL_SECONDARY_PASSWORD (or fallback default).');
+  console.log('Demo flow anchors:');
+  console.log('- Pending quote: QT-DEMO-2026-001 (Mokoena Extension Planning)');
+  console.log('- Active project: ECC-ACT-2026-002 / QT-DEMO-2026-002 (Khumalo Family Residence)');
+  console.log('- Completed project: ECC-CMP-2025-014 / QT-DEMO-2025-014 (Meridian Medical Rooms Upgrade)');
+  console.log('');
 }
 
 async function main() {
-  const password = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+  await resetDemoDatabase();
 
-  const admin = await prisma.adminUser.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: {
-      password,
-      name: ADMIN_NAME,
-      isActive: true,
-    },
-    create: {
-      email: ADMIN_EMAIL,
-      password,
-      name: ADMIN_NAME,
-      role: 'SUPER_ADMIN',
-      isActive: true,
-    },
-  });
-  const staffUsers = await seedStaffUsers(password);
-
+  const adminContext = await seedAdminUsers();
   await seedCompanyProfile();
-  await upsertReferenceData();
-  await seedReviews();
-  await seedForum();
-  await seedLeads();
-  await seedCrmWorkflow(admin.id, staffUsers);
-  await seedClientPortal(admin.id);
-  await seedMediaAssets(admin.id);
-  await seedCommunicationLogs();
-  await seedNewsletterAndAudit(admin.id);
+  await seedReferenceContent();
+  await seedForumContent();
+  await seedSuppliersAndMaterials();
+  await seedDemoDataset(adminContext);
+  await seedAuditLog(adminContext.adminId);
+  printSummary();
 }
 
 main()

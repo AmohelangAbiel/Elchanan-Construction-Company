@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   BriefcaseBusiness,
@@ -12,7 +12,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { requireAdminSession } from '../../../../../lib/auth';
-import { formatCurrency } from '../../../../../lib/billing';
+import { deriveInvoiceStatus, formatCurrency, getOutstandingBalance } from '../../../../../lib/billing';
 import {
   MATERIAL_ITEM_STATUSES,
   PROCUREMENT_STATUSES,
@@ -139,6 +139,16 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
             },
           },
         },
+        invoices: {
+          where: { deletedAt: null },
+          orderBy: [{ issuedAt: 'desc' }, { createdAt: 'desc' }],
+          include: {
+            payments: {
+              where: { deletedAt: null },
+              select: { amount: true, paymentDate: true },
+            },
+          },
+        },
         milestones: {
           where: { deletedAt: null },
           orderBy: [{ sortOrder: 'asc' }, { targetDate: 'asc' }],
@@ -181,6 +191,47 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
     receivedValue: snapshot.receivedValue,
     estimatedProcurementCost: snapshot.estimatedProcurementCost,
   });
+  const completedTaskCount = project.siteTasks.filter((item) => item.status === 'DONE').length;
+  const taskCompletionPercent = project.siteTasks.length
+    ? Math.round((completedTaskCount / project.siteTasks.length) * 100)
+    : 0;
+  const receivedRequirementCount = project.procurementItems.filter((item) => item.status === 'RECEIVED').length;
+  const activeRequirementCount = project.procurementItems.filter((item) => item.status !== 'CANCELLED').length;
+  const procurementCompletionPercent = activeRequirementCount
+    ? Math.round((receivedRequirementCount / activeRequirementCount) * 100)
+    : 0;
+  const invoiceSummaries = project.invoices.map((invoice) => {
+    const paidTotal = invoice.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+    const totalValue = Number(invoice.total || invoice.subtotal || 0);
+    const displayStatus = deriveInvoiceStatus({
+      status: invoice.status,
+      issueDate: invoice.issuedAt,
+      dueDate: invoice.dueDate,
+      total: totalValue,
+      paidTotal,
+    });
+
+    return {
+      totalValue,
+      paidTotal,
+      balance: getOutstandingBalance({ total: totalValue, paidTotal }),
+      displayStatus,
+    };
+  });
+  const paymentSummary = invoiceSummaries.reduce(
+    (summary, invoice) => ({
+      totalBilled: summary.totalBilled + invoice.totalValue,
+      totalPaid: summary.totalPaid + invoice.paidTotal,
+      outstanding: summary.outstanding + invoice.balance,
+      paidInvoices: summary.paidInvoices + (invoice.displayStatus === 'PAID' ? 1 : 0),
+    }),
+    {
+      totalBilled: 0,
+      totalPaid: 0,
+      outstanding: 0,
+      paidInvoices: 0,
+    },
+  );
   const openRequirementCount = project.procurementItems.filter((item) => item.status !== 'RECEIVED' && item.status !== 'CANCELLED').length;
   const openPurchaseRecords = project.purchaseRequests.filter((record) => record.status !== 'RECEIVED' && record.status !== 'CANCELLED').length;
 
@@ -205,8 +256,10 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-cyan">Project operations</p>
               <h1 className="mt-4 text-3xl font-semibold text-white">{project.title}</h1>
               <p className="mt-2 text-sm text-slate-400">{projectReference}</p>
-              <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-300">
-                <span>Project status: <span className="font-semibold text-white">{formatStatusLabel(project.status)}</span></span>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.16em] ${statusTone(project.status)}`}>
+                  {formatStatusLabel(project.status)}
+                </span>
                 {project.lead ? <span>Client: <span className="font-semibold text-white">{project.lead.fullName}</span></span> : null}
                 {project.quoteRequest ? <span>Quote: <span className="font-semibold text-white">{project.quoteRequest.referenceCode}</span></span> : null}
               </div>
@@ -235,30 +288,31 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
         <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <article className="interactive-card rounded-2xl p-5">
             <div className="flex items-center gap-3">
+              <span className="icon-pill"><ClipboardList size={16} /></span>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Task completion</p>
+                <p className="mt-2 text-2xl font-semibold text-white">{taskCompletionPercent}%</p>
+                <p className="mt-1 text-xs text-slate-500">{completedTaskCount}/{project.siteTasks.length} site tasks done</p>
+              </div>
+            </div>
+          </article>
+          <article className="interactive-card rounded-2xl p-5">
+            <div className="flex items-center gap-3">
+              <span className="icon-pill"><PackageSearch size={16} /></span>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Procurement status</p>
+                <p className="mt-2 text-2xl font-semibold text-white">{procurementCompletionPercent}%</p>
+                <p className="mt-1 text-xs text-slate-500">{receivedRequirementCount}/{activeRequirementCount} requirements received</p>
+              </div>
+            </div>
+          </article>
+          <article className="interactive-card rounded-2xl p-5">
+            <div className="flex items-center gap-3">
               <span className="icon-pill"><CircleDollarSign size={16} /></span>
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated procurement cost</p>
-                <p className="mt-2 text-2xl font-semibold text-white">{formatCurrency(snapshot.estimatedProcurementCost)}</p>
-              </div>
-            </div>
-          </article>
-          <article className="interactive-card rounded-2xl p-5">
-            <div className="flex items-center gap-3">
-              <span className="icon-pill"><ShoppingCart size={16} /></span>
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Ordered / received value</p>
-                <p className="mt-2 text-2xl font-semibold text-white">{formatCurrency(snapshot.orderedValue)}</p>
-                <p className="mt-1 text-xs text-slate-500">Received {formatCurrency(snapshot.receivedValue)}</p>
-              </div>
-            </div>
-          </article>
-          <article className="interactive-card rounded-2xl p-5">
-            <div className="flex items-center gap-3">
-              <span className="icon-pill"><Wrench size={16} /></span>
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Open / blocked site tasks</p>
-                <p className="mt-2 text-2xl font-semibold text-white">{snapshot.openTasks}</p>
-                <p className="mt-1 text-xs text-slate-500">{snapshot.blockedTasks} blocked · {snapshot.overdueTasks} overdue</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Payment summary</p>
+                <p className="mt-2 text-2xl font-semibold text-white">{formatCurrency(paymentSummary.totalPaid)}</p>
+                <p className="mt-1 text-xs text-slate-500">Billed {formatCurrency(paymentSummary.totalBilled)} · Outstanding {formatCurrency(paymentSummary.outstanding)}</p>
               </div>
             </div>
           </article>
@@ -400,8 +454,8 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
                             <p className="font-semibold text-white">{item.name}</p>
                             <p className="mt-1 text-xs text-slate-500">
                               {item.estimatedQuantity.toString()} {item.unit}
-                              {item.materialItem ? ` · Catalog: ${item.materialItem.name}` : ''}
-                              {item.preferredSupplier ? ` · Supplier: ${item.preferredSupplier.name}` : ''}
+                              {item.materialItem ? ` Â· Catalog: ${item.materialItem.name}` : ''}
+                              {item.preferredSupplier ? ` Â· Supplier: ${item.preferredSupplier.name}` : ''}
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -560,9 +614,9 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-semibold text-white">{record.referenceCode}</p>
-                        <p className="mt-1 text-sm text-slate-400">{getPurchaseDocumentLabel(record.status)} · {record.supplier?.name || 'Supplier pending'}</p>
+                        <p className="mt-1 text-sm text-slate-400">{getPurchaseDocumentLabel(record.status)} Â· {record.supplier?.name || 'Supplier pending'}</p>
                         <p className="mt-2 text-xs text-slate-500">
-                          {record.lineItems.length} line items · Request {new Date(record.requestDate).toLocaleDateString()}
+                          {record.lineItems.length} line items Â· Request {new Date(record.requestDate).toLocaleDateString()}
                         </p>
                       </div>
                       <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.16em] ${statusTone(record.status)}`}>
@@ -785,8 +839,8 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
                           <p className="font-semibold text-white">{task.title}</p>
                           <p className="mt-1 text-xs text-slate-500">
                             {task.assignedToAdmin ? `Assigned to ${task.assignedToAdmin.name}` : 'Unassigned'}
-                            {task.projectMilestone ? ` · Milestone: ${task.projectMilestone.title}` : ''}
-                            {task.dueDate ? ` · Due ${new Date(task.dueDate).toLocaleDateString()}` : ''}
+                            {task.projectMilestone ? ` Â· Milestone: ${task.projectMilestone.title}` : ''}
+                            {task.dueDate ? ` Â· Due ${new Date(task.dueDate).toLocaleDateString()}` : ''}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -922,7 +976,7 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
                           <p className="mt-1 text-sm text-slate-400">{log.summary}</p>
                           <p className="mt-2 text-xs text-slate-500">
                             {log.createdByAdmin ? `By ${log.createdByAdmin.name}` : 'Author not recorded'}
-                            {log.weatherConditions ? ` · ${log.weatherConditions}` : ''}
+                            {log.weatherConditions ? ` Â· ${log.weatherConditions}` : ''}
                           </p>
                         </div>
                         <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.16em] ${log.clientVisible ? 'border-brand-cyan/35 bg-brand-cyan/10 text-brand-cyan' : 'border-slate-700 bg-slate-900/80 text-slate-300'}`}>
@@ -995,3 +1049,5 @@ export default async function AdminProjectOperationsPage({ params, searchParams 
     </main>
   );
 }
+
+

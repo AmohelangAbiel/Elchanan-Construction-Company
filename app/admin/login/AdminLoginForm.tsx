@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiErrorMessage, readApiResponse } from '../../../lib/api-client';
 
 type AdminLoginFormProps = {
   notice?: string;
@@ -26,9 +27,7 @@ export function AdminLoginForm({ notice }: AdminLoginFormProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response
-        .json()
-        .catch(() => ({} as { success?: boolean; error?: string }));
+      const data = await readApiResponse(response);
       if (response.ok && data.success) {
         router.push('/admin');
         router.refresh();
@@ -36,7 +35,7 @@ export function AdminLoginForm({ notice }: AdminLoginFormProps) {
       }
 
       setStatus('error');
-      setError(data.error || 'Unable to sign in.');
+      setError(getApiErrorMessage(data, 'Unable to sign in.'));
     } catch {
       setStatus('error');
       setError('Network error. Please try again.');

@@ -94,6 +94,23 @@ function extractCookieValue(response: Awaited<ReturnType<APIRequestContext['post
   return value;
 }
 
+function expectApiError(body: unknown, message: string, code?: string) {
+  expect(body).toMatchObject({
+    success: false,
+    error: {
+      message,
+    },
+  });
+
+  if (code) {
+    expect(body).toMatchObject({
+      error: {
+        code,
+      },
+    });
+  }
+}
+
 test.afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -625,10 +642,7 @@ test('admin mutation API returns 401 when unauthenticated', async ({ request }) 
 
   expect(response.status()).toBe(401);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Unauthorized',
-  });
+  expectApiError(body, 'Unauthorized', 'UNAUTHORIZED');
 });
 
 test('portal login succeeds with valid credentials', async ({ page }) => {
@@ -659,10 +673,7 @@ test('portal mutation API returns 401 when unauthenticated', async ({ request })
 
   expect(response.status()).toBe(401);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Unauthorized',
-  });
+  expectApiError(body, 'Unauthorized', 'UNAUTHORIZED');
 });
 
 test('portal session cookie cannot access admin mutation API', async ({ request }) => {
@@ -688,10 +699,7 @@ test('portal session cookie cannot access admin mutation API', async ({ request 
 
   expect(response.status()).toBe(401);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Unauthorized',
-  });
+  expectApiError(body, 'Unauthorized', 'UNAUTHORIZED');
 });
 
 test('invalid JSON payload is rejected with 400', async ({ request }) => {
@@ -708,10 +716,7 @@ test('invalid JSON payload is rejected with 400', async ({ request }) => {
 
   expect(response.status()).toBe(400);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Invalid request payload.',
-  });
+  expectApiError(body, 'Invalid request payload.', 'BAD_REQUEST');
 });
 
 test('oversized JSON payload is rejected with 413', async ({ request }) => {
@@ -738,10 +743,102 @@ test('oversized JSON payload is rejected with 413', async ({ request }) => {
 
   expect(response.status()).toBe(413);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Payload too large.',
+  expectApiError(body, 'Payload too large.', 'PAYLOAD_TOO_LARGE');
+});
+
+test('unexpected JSON fields are rejected with 422', async ({ request }) => {
+  const origin = getOrigin();
+
+  const response = await request.post('/api/enquiries', {
+    headers: {
+      Origin: origin,
+      'Content-Type': 'application/json',
+    },
+    data: {
+      fullName: 'Unexpected Field Tester',
+      email: 'unexpected-fields@example.com',
+      phone: '+27747512226',
+      subject: 'Strict payload validation',
+      serviceInterest: 'Residential Construction',
+      preferredContactMethod: 'Email',
+      location: 'Rustenburg',
+      message: 'This payload includes an extra field and should be rejected cleanly.',
+      consentGiven: true,
+      honeypot: '',
+      internalOnlyField: 'should-not-be-accepted',
+    },
   });
+
+  expect(response.status()).toBe(422);
+  const body = await response.json();
+  expectApiError(body, 'Validation failed.', 'VALIDATION_FAILED');
+});
+
+test('invalid admin token is rejected safely with 401', async ({ request }) => {
+  const origin = getOrigin();
+
+  const response = await request.post('/api/admin/services', {
+    headers: {
+      Origin: origin,
+      Cookie: 'elchanan_admin_token=not-a-valid-jwt',
+    },
+    multipart: {
+      title: 'Invalid token service',
+      summary: 'summary',
+      description: 'description',
+      sortOrder: '0',
+    },
+  });
+
+  expect(response.status()).toBe(401);
+  const body = await response.json();
+  expectApiError(body, 'Unauthorized', 'UNAUTHORIZED');
+});
+
+test('duplicate enquiry submissions are idempotent within the protection window', async ({ request }) => {
+  const origin = getOrigin();
+  const email = `duplicate-enquiry-${Date.now()}@example.com`;
+  const payload = {
+    fullName: 'Duplicate Enquiry Tester',
+    email,
+    phone: '+27747512226',
+    subject: 'Duplicate protection check',
+    serviceInterest: 'Residential Construction',
+    preferredContactMethod: 'Email',
+    location: 'Rustenburg',
+    message: 'This submission is intentionally repeated to confirm duplicate protection.',
+    consentGiven: true,
+    honeypot: '',
+  };
+
+  const firstResponse = await request.post('/api/enquiries', {
+    headers: {
+      Origin: origin,
+      'Content-Type': 'application/json',
+    },
+    data: payload,
+  });
+
+  expect(firstResponse.status()).toBe(200);
+  const firstBody = await firstResponse.json();
+  expect(firstBody.success).toBe(true);
+  expect(firstBody.duplicate).toBeUndefined();
+
+  const duplicateResponse = await request.post('/api/enquiries', {
+    headers: {
+      Origin: origin,
+      'Content-Type': 'application/json',
+    },
+    data: payload,
+  });
+
+  expect(duplicateResponse.status()).toBe(200);
+  const duplicateBody = await duplicateResponse.json();
+  expect(duplicateBody).toMatchObject({
+    success: true,
+    duplicate: true,
+  });
+  expect(duplicateBody.data?.duplicate).toBe(true);
 });
 
 test('safe redirect enforcement blocks external returnTo', async ({ request }) => {
@@ -798,10 +895,7 @@ test('session revocation invalidates previously issued admin token', async ({ re
 
   expect(response.status()).toBe(401);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Unauthorized',
-  });
+  expectApiError(body, 'Unauthorized', 'UNAUTHORIZED');
 });
 
 test('portal user cannot access another client quote route', async ({ page }) => {
@@ -835,10 +929,7 @@ test('portal user cannot access another client document endpoint', async ({ requ
 
   expect(response.status()).toBe(404);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Document not found.',
-  });
+  expectApiError(body, 'Document not found.', 'NOT_FOUND');
 });
 
 test('portal document endpoint blocks insecure external HTTP URLs', async ({ request }) => {
@@ -859,10 +950,7 @@ test('portal document endpoint blocks insecure external HTTP URLs', async ({ req
 
   expect(response.status()).toBe(422);
   const body = await response.json();
-  expect(body).toMatchObject({
-    success: false,
-    error: 'Document URL is not valid.',
-  });
+  expectApiError(body, 'Document URL is not valid.', 'VALIDATION_FAILED');
 });
 
 test('health and readiness endpoints return structured statuses', async ({ request }) => {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiErrorMessage, readApiResponse } from '../../../lib/api-client';
 
 type PortalLoginFormProps = {
   notice?: string;
@@ -9,7 +10,7 @@ type PortalLoginFormProps = {
 
 export function PortalLoginForm({ notice }: PortalLoginFormProps) {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('client@elchananconstruction.co.za');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -26,9 +27,7 @@ export function PortalLoginForm({ notice }: PortalLoginFormProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response
-        .json()
-        .catch(() => ({} as { success?: boolean; error?: string }));
+      const data = await readApiResponse(response);
 
       if (response.ok && data.success) {
         router.push('/portal');
@@ -37,7 +36,7 @@ export function PortalLoginForm({ notice }: PortalLoginFormProps) {
       }
 
       setStatus('error');
-      setError(data.error || 'Unable to sign in.');
+      setError(getApiErrorMessage(data, 'Unable to sign in.'));
     } catch {
       setStatus('error');
       setError('Network error. Please try again.');
@@ -93,7 +92,9 @@ export function PortalLoginForm({ notice }: PortalLoginFormProps) {
         </form>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-xs text-slate-400">
-          Access is provisioned directly by Elchanan Construction for verified clients.
+          <p className="font-semibold text-white">Seeded demo portal account</p>
+          <p className="mt-1">Email defaults to `client@elchananconstruction.co.za` unless overridden during seeding.</p>
+          <p className="mt-1">Password is configured through `SEED_PORTAL_PASSWORD` when `npm run db:seed` is run.</p>
         </div>
       </div>
     </main>

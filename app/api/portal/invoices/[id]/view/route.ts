@@ -1,6 +1,13 @@
-import { NextResponse } from 'next/server';
 import { requirePortalAuth } from '../../../../../../lib/portal-auth';
-import { assertSameOrigin, formDataToObject, getRequestId, isRequestBodyWithinLimit, jsonError } from '../../../../../../lib/api';
+import {
+  assertSameOrigin,
+  formDataToObject,
+  getRequestId,
+  getUnexpectedKeys,
+  isRequestBodyWithinLimit,
+  jsonError,
+  jsonSuccess,
+} from '../../../../../../lib/api';
 import { BODY_SIZE_LIMITS } from '../../../../../../lib/constants';
 import { getPortalInvoiceOwnershipFilter } from '../../../../../../lib/portal';
 import { prisma } from '../../../../../../lib/prisma';
@@ -28,7 +35,18 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const payload = formDataToObject(formData);
-  void payload.returnTo;
+  const unexpectedKeys = getUnexpectedKeys(payload, ['returnTo']);
+  if (unexpectedKeys.length) {
+    return jsonError(
+      'Validation failed.',
+      422,
+      {
+        formErrors: [`Unexpected fields: ${unexpectedKeys.join(', ')}`],
+        fieldErrors: {},
+      },
+      { requestId },
+    );
+  }
 
   const invoice = await prisma.invoice.findFirst({
     where: {
@@ -58,7 +76,5 @@ export async function POST(request: Request, { params }: { params: { id: string 
     });
   }
 
-  const response = NextResponse.json({ success: true });
-  response.headers.set('x-request-id', requestId);
-  return response;
+  return jsonSuccess({ viewed: true }, 200, { requestId });
 }

@@ -47,6 +47,42 @@ export default async function AdminDashboardPage() {
   let myOpenTasks: Awaited<ReturnType<typeof prisma.followUpTask.findMany>> = [];
   let myAssignedLeads = 0;
   let myAssignedQuotes = 0;
+  let activeDeliveryProjects = 0;
+  let pendingQuotesCount = 0;
+  let recentEnquiries: Array<{
+    id: string;
+    fullName: string;
+    subject: string;
+    status: string;
+    createdAt: Date;
+  }> = [];
+  let featuredPendingQuote:
+    | {
+        id: string;
+        referenceCode: string;
+        fullName: string;
+        serviceType: string;
+        status: string;
+      }
+    | null = null;
+  let featuredActiveProject:
+    | {
+        id: string;
+        title: string;
+        projectCode: string | null;
+        lead: { fullName: string } | null;
+        quoteRequest: { referenceCode: string } | null;
+      }
+    | null = null;
+  let featuredCompletedProject:
+    | {
+        id: string;
+        title: string;
+        projectCode: string | null;
+        lead: { fullName: string } | null;
+        quoteRequest: { referenceCode: string } | null;
+      }
+    | null = null;
   let activeProjectsNeedingProcurement = 0;
   let overdueSiteTasks = 0;
   let blockedSiteTasks = 0;
@@ -66,7 +102,16 @@ export default async function AdminDashboardPage() {
 
   if (hasCrmAccess) {
     try {
-      [leadStatusRows, overdueTasks, myOpenTasks, myAssignedLeads, myAssignedQuotes] = await Promise.all([
+      [
+        leadStatusRows,
+        overdueTasks,
+        myOpenTasks,
+        myAssignedLeads,
+        myAssignedQuotes,
+        pendingQuotesCount,
+        recentEnquiries,
+        featuredPendingQuote,
+      ] = await Promise.all([
         prisma.lead.groupBy({
           by: ['status'],
           where: { deletedAt: null },
@@ -101,6 +146,38 @@ export default async function AdminDashboardPage() {
             status: { in: ['NEW', 'REVIEWING', 'RESPONDED'] },
           },
         }),
+        prisma.quoteRequest.count({
+          where: {
+            deletedAt: null,
+            status: { in: ['NEW', 'REVIEWING', 'RESPONDED'] },
+          },
+        }),
+        prisma.contactEnquiry.findMany({
+          where: { deletedAt: null },
+          orderBy: [{ createdAt: 'desc' }],
+          take: 5,
+          select: {
+            id: true,
+            fullName: true,
+            subject: true,
+            status: true,
+            createdAt: true,
+          },
+        }),
+        prisma.quoteRequest.findFirst({
+          where: {
+            deletedAt: null,
+            status: { in: ['NEW', 'REVIEWING', 'RESPONDED'] },
+          },
+          orderBy: [{ createdAt: 'desc' }],
+          select: {
+            id: true,
+            referenceCode: true,
+            fullName: true,
+            serviceType: true,
+            status: true,
+          },
+        }),
       ]);
     } catch (error) {
       const isTableMissing =
@@ -116,6 +193,9 @@ export default async function AdminDashboardPage() {
   if (hasOperationsAccess) {
     try {
       [
+        activeDeliveryProjects,
+        featuredActiveProject,
+        featuredCompletedProject,
         activeProjectsNeedingProcurement,
         overdueSiteTasks,
         blockedSiteTasks,
@@ -123,6 +203,48 @@ export default async function AdminDashboardPage() {
         upcomingRequiredBy,
         recentSiteLogs,
       ] = await Promise.all([
+        prisma.deliveryProject.count({
+          where: {
+            deletedAt: null,
+            status: 'ACTIVE',
+          },
+        }),
+        prisma.deliveryProject.findFirst({
+          where: {
+            deletedAt: null,
+            status: 'ACTIVE',
+          },
+          orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+          select: {
+            id: true,
+            title: true,
+            projectCode: true,
+            lead: {
+              select: { fullName: true },
+            },
+            quoteRequest: {
+              select: { referenceCode: true },
+            },
+          },
+        }),
+        prisma.deliveryProject.findFirst({
+          where: {
+            deletedAt: null,
+            status: 'COMPLETED',
+          },
+          orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+          select: {
+            id: true,
+            title: true,
+            projectCode: true,
+            lead: {
+              select: { fullName: true },
+            },
+            quoteRequest: {
+              select: { referenceCode: true },
+            },
+          },
+        }),
         prisma.deliveryProject.count({
           where: {
             deletedAt: null,
@@ -255,6 +377,108 @@ export default async function AdminDashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">My assigned leads</p>
               <p className="mt-3 text-3xl font-semibold text-white">{myAssignedLeads}</p>
             </Link>
+          </section>
+        ) : null}
+
+        {hasCrmAccess ? (
+          <section className="mt-6 rounded-[2rem] border border-slate-800/70 bg-slate-950/75 p-6 shadow-glow">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Demo flow spotlight</h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  The seeded workspace now tells a clean three-stage story from pending quote to active delivery and completed handover.
+                </p>
+              </div>
+              <Link href="/admin/quotes" className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-cyan hover:text-white">
+                Open quote board
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Link href={featuredActiveProject ? `/admin/projects/${featuredActiveProject.id}/operations` : '/admin/procurement'} className="interactive-card rounded-2xl p-5">
+                  <span className="icon-pill mb-3">
+                    <Wrench size={16} />
+                  </span>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Active projects</p>
+                  <p className="mt-2 text-3xl font-semibold text-white">{activeDeliveryProjects}</p>
+                  <p className="mt-2 text-sm text-slate-400">Delivery projects currently in execution.</p>
+                </Link>
+                <Link href="/admin/quotes?status=RESPONDED" className="interactive-card rounded-2xl p-5">
+                  <span className="icon-pill mb-3">
+                    <Quote size={16} />
+                  </span>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Pending quotes</p>
+                  <p className="mt-2 text-3xl font-semibold text-white">{pendingQuotesCount}</p>
+                  <p className="mt-2 text-sm text-slate-400">Quotes still waiting on final client approval.</p>
+                </Link>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-900/70 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-white">Recent enquiries</p>
+                    <Link href="/admin/enquiries" className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-cyan hover:text-white">
+                      View all
+                    </Link>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {recentEnquiries.length ? recentEnquiries.map((enquiry) => (
+                      <Link key={enquiry.id} href={`/admin/enquiries/${enquiry.id}`} className="block rounded-xl border border-slate-800 bg-slate-950/70 p-3 transition hover:border-brand-cyan/45">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-semibold text-white">{enquiry.fullName}</p>
+                          <span className="text-xs uppercase tracking-[0.16em] text-slate-500">{enquiry.status.replace('_', ' ')}</span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-300">{enquiry.subject}</p>
+                        <p className="mt-2 text-xs text-slate-500">{new Date(enquiry.createdAt).toLocaleString('en-ZA')}</p>
+                      </Link>
+                    )) : (
+                      <p className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-400">
+                        Fresh enquiries will appear here as soon as they are captured.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-900/70 p-5">
+                  <p className="text-sm font-semibold text-white">Demo journey shortcuts</p>
+                  <div className="mt-4 space-y-3">
+                    {featuredPendingQuote ? (
+                      <Link href={`/admin/quotes/${featuredPendingQuote.id}`} className="block rounded-xl border border-slate-800 bg-slate-950/70 p-3 transition hover:border-brand-cyan/45">
+                        <p className="text-xs uppercase tracking-[0.16em] text-brand-cyan">1. Pending quote</p>
+                        <p className="mt-2 font-semibold text-white">{featuredPendingQuote.referenceCode}</p>
+                        <p className="mt-1 text-sm text-slate-300">{featuredPendingQuote.fullName} · {featuredPendingQuote.serviceType}</p>
+                      </Link>
+                    ) : null}
+                    {featuredActiveProject ? (
+                      <Link href={`/admin/projects/${featuredActiveProject.id}/operations`} className="block rounded-xl border border-slate-800 bg-slate-950/70 p-3 transition hover:border-brand-cyan/45">
+                        <p className="text-xs uppercase tracking-[0.16em] text-brand-cyan">2. Active delivery</p>
+                        <p className="mt-2 font-semibold text-white">{featuredActiveProject.projectCode || featuredActiveProject.title}</p>
+                        <p className="mt-1 text-sm text-slate-300">
+                          {featuredActiveProject.lead?.fullName || 'Client not linked'}
+                          {featuredActiveProject.quoteRequest ? ` · ${featuredActiveProject.quoteRequest.referenceCode}` : ''}
+                        </p>
+                      </Link>
+                    ) : null}
+                    {featuredCompletedProject ? (
+                      <Link href={`/admin/projects/${featuredCompletedProject.id}/operations`} className="block rounded-xl border border-slate-800 bg-slate-950/70 p-3 transition hover:border-brand-cyan/45">
+                        <p className="text-xs uppercase tracking-[0.16em] text-brand-cyan">3. Completed handover</p>
+                        <p className="mt-2 font-semibold text-white">{featuredCompletedProject.projectCode || featuredCompletedProject.title}</p>
+                        <p className="mt-1 text-sm text-slate-300">
+                          {featuredCompletedProject.lead?.fullName || 'Client not linked'}
+                          {featuredCompletedProject.quoteRequest ? ` · ${featuredCompletedProject.quoteRequest.referenceCode}` : ''}
+                        </p>
+                      </Link>
+                    ) : null}
+                    {!featuredPendingQuote && !featuredActiveProject && !featuredCompletedProject ? (
+                      <p className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-400">
+                        Seed the demo dataset to unlock guided stage shortcuts here.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
         ) : null}
 

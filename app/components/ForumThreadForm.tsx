@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState } from 'react';
+import { getApiData, getApiErrorMessage, readApiResponse } from '../../lib/api-client';
 
 type ForumThreadFormProps = {
   categories?: Array<{ slug: string; name: string }>;
@@ -39,10 +40,13 @@ export function ForumThreadForm({ categories = [] }: ForumThreadFormProps) {
         }),
       });
 
-      const result = await response.json().catch(() => ({} as Record<string, string>));
+      const result = await readApiResponse<{
+        message?: string;
+      }>(response);
+      const data = getApiData(result);
       if (response.ok && result.success) {
         setStatus('success');
-        setMessage(result.message || 'Your discussion has been submitted for moderation.');
+        setMessage(typeof data.message === 'string' ? data.message : 'Your discussion has been submitted for moderation.');
         setForm({
           ...initialState,
           categorySlug: categories[0]?.slug || '',
@@ -51,7 +55,7 @@ export function ForumThreadForm({ categories = [] }: ForumThreadFormProps) {
       }
 
       setStatus('error');
-      setMessage(result.error || 'Unable to submit discussion topic.');
+      setMessage(getApiErrorMessage(result, 'Unable to submit discussion topic.'));
     } catch {
       setStatus('error');
       setMessage('Network error. Please try again.');

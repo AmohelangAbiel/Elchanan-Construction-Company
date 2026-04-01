@@ -123,7 +123,17 @@ const requiredDateString = (label: string) =>
     .transform((value) => sanitizeText(value, 40))
     .refine((value) => !Number.isNaN(Date.parse(value)), `${label} is required`);
 
-export const enquirySchema = z.object({
+const returnToField = optionalText(2048);
+
+function strictObject<T extends z.ZodRawShape>(shape: T) {
+  return z.object(shape).strict();
+}
+
+function strictObjectWithReturnTo<T extends z.ZodRawShape>(shape: T) {
+  return z.object({ ...shape, returnTo: returnToField }).strict();
+}
+
+export const enquirySchema = strictObject({
   fullName: requiredText('Full name', 2, 120),
   email: z
     .string()
@@ -157,7 +167,7 @@ export const enquirySchema = z.object({
   honeypot: z.string().optional(),
 });
 
-export const quoteSchema = z.object({
+export const quoteSchema = strictObject({
   fullName: requiredText('Full name', 2, 120),
   email: z
     .string()
@@ -205,7 +215,7 @@ export const quoteSchema = z.object({
   honeypot: z.string().optional(),
 });
 
-export const reviewSchema = z.object({
+export const reviewSchema = strictObject({
   name: requiredText('Name', 2, 120),
   email: optionalEmailField(),
   rating: z.coerce.number().int().min(1).max(5),
@@ -216,7 +226,7 @@ export const reviewSchema = z.object({
   honeypot: z.string().optional(),
 });
 
-export const forumThreadSchema = z.object({
+export const forumThreadSchema = strictObject({
   categorySlug: optionalText(100),
   title: requiredText('Topic title', 5, 160),
   content: requiredText('Topic description', 10, 5000),
@@ -226,14 +236,14 @@ export const forumThreadSchema = z.object({
   honeypot: z.string().optional(),
 });
 
-export const forumReplySchema = z.object({
+export const forumReplySchema = strictObject({
   authorName: requiredText('Name', 2, 120),
   authorEmail: optionalEmailField(),
   content: requiredText('Reply', 10, 3000),
   honeypot: z.string().optional(),
 });
 
-export const adminLoginSchema = z.object({
+export const adminLoginSchema = strictObject({
   email: z
     .string()
     .transform((value) => sanitizeText(value, 320).toLowerCase())
@@ -241,7 +251,7 @@ export const adminLoginSchema = z.object({
   password: z.string().min(8, 'Password is required').max(200, 'Password is too long'),
 });
 
-export const portalLoginSchema = z.object({
+export const portalLoginSchema = strictObject({
   email: z
     .string()
     .transform((value) => sanitizeText(value, 320).toLowerCase())
@@ -249,7 +259,7 @@ export const portalLoginSchema = z.object({
   password: z.string().min(8, 'Password is required').max(200, 'Password is too long'),
 });
 
-export const portalProfileUpdateSchema = z.object({
+export const portalProfileUpdateSchema = strictObjectWithReturnTo({
   fullName: requiredText('Full name', 2, 160),
   displayName: optionalText(120),
   phone: optionalPhoneText('Phone'),
@@ -262,7 +272,7 @@ export const portalProfileUpdateSchema = z.object({
     .refine((value) => !value || CONTACT_METHODS.includes(value as (typeof CONTACT_METHODS)[number]), 'Invalid contact preference'),
 });
 
-export const enquiryUpdateSchema = z.object({
+export const enquiryUpdateSchema = strictObjectWithReturnTo({
   status: z.enum(['NEW', 'IN_PROGRESS', 'RESOLVED', 'ARCHIVED']),
   assignedToAdminId: adminIdField,
   notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
@@ -274,7 +284,7 @@ export const enquiryUpdateSchema = z.object({
   communicationMessage: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const quoteUpdateSchema = z.object({
+export const quoteUpdateSchema = strictObjectWithReturnTo({
   status: z.enum(['NEW', 'REVIEWING', 'RESPONDED', 'WON', 'LOST', 'ARCHIVED']),
   assignedToAdminId: adminIdField,
   leadStatus: z.enum(LEAD_STATUSES).optional(),
@@ -308,20 +318,20 @@ export const quoteUpdateSchema = z.object({
   communicationMessage: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const reviewUpdateSchema = z.object({
+export const reviewUpdateSchema = strictObject({
   status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
   featured: z.union([z.literal('true'), z.literal('false'), z.boolean()]).optional(),
 });
 
-export const forumThreadUpdateSchema = z.object({
+export const forumThreadUpdateSchema = strictObject({
   status: z.enum(['PENDING', 'OPEN', 'LOCKED', 'HIDDEN']),
 });
 
-export const forumReplyUpdateSchema = z.object({
+export const forumReplyUpdateSchema = strictObjectWithReturnTo({
   status: z.enum(['PENDING', 'APPROVED', 'HIDDEN']),
 });
 
-export const serviceInputSchema = z.object({
+export const serviceInputSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 2, 140),
   slug: z
     .string()
@@ -344,7 +354,7 @@ export const serviceInputSchema = z.object({
   published: z.union([z.literal('true'), z.literal('false'), z.boolean()]).optional(),
 });
 
-export const projectInputSchema = z.object({
+export const projectInputSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 2, 140),
   slug: z
     .string()
@@ -381,7 +391,7 @@ export const projectInputSchema = z.object({
   published: z.union([z.literal('true'), z.literal('false'), z.boolean()]).optional(),
 });
 
-export const pricingInputSchema = z.object({
+export const pricingInputSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 2, 140),
   slug: z
     .string()
@@ -400,7 +410,7 @@ export const pricingInputSchema = z.object({
   published: z.union([z.literal('true'), z.literal('false'), z.boolean()]).optional(),
 });
 
-export const settingsInputSchema = z.object({
+export const settingsInputSchema = strictObject({
   companyName: requiredText('Company name', 2, 160),
   displayName: optionalText(160),
   tagline: requiredText('Tagline', 2, 220),
@@ -444,7 +454,7 @@ export const settingsInputSchema = z.object({
   hoursJson: z.string().optional().transform((value) => sanitizeOptionalText(value, 6000)),
 });
 
-export const leadCreateSchema = z.object({
+export const leadCreateSchema = strictObjectWithReturnTo({
   fullName: requiredText('Full name', 2, 160),
   email: z
     .string()
@@ -459,7 +469,7 @@ export const leadCreateSchema = z.object({
   tagsText: z.string().optional().transform((value) => sanitizeOptionalText(value, 1000)),
 });
 
-export const leadUpdateSchema = z.object({
+export const leadUpdateSchema = strictObjectWithReturnTo({
   status: z.enum(LEAD_STATUSES),
   assignedToAdminId: adminIdField,
   companyName: optionalText(160),
@@ -473,7 +483,7 @@ export const leadUpdateSchema = z.object({
   communicationMessage: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const taskCreateSchema = z.object({
+export const taskCreateSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 3, 180),
   description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
   status: z.enum(TASK_STATUSES).default('OPEN'),
@@ -489,7 +499,7 @@ export const taskCreateSchema = z.object({
   deliveryProjectId: adminIdField,
 });
 
-export const taskUpdateSchema = z.object({
+export const taskUpdateSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 3, 180),
   description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
   status: z.enum(TASK_STATUSES),
@@ -501,14 +511,14 @@ export const taskUpdateSchema = z.object({
   assignedToAdminId: adminIdField,
 });
 
-export const deliveryProjectUpdateSchema = z.object({
+export const deliveryProjectUpdateSchema = strictObject({
   title: requiredText('Title', 3, 180),
   status: z.enum(DELIVERY_PROJECT_STATUSES),
   startTarget: dateString,
   notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const quoteApprovalSubmissionSchema = z.object({
+export const quoteApprovalSubmissionSchema = strictObjectWithReturnTo({
   approvalStatus: z
     .string()
     .optional()
@@ -520,7 +530,7 @@ export const quoteApprovalSubmissionSchema = z.object({
   clientResponseNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const documentApprovalSubmissionSchema = z.object({
+export const documentApprovalSubmissionSchema = strictObjectWithReturnTo({
   approvalStatus: z
     .string()
     .optional()
@@ -532,7 +542,7 @@ export const documentApprovalSubmissionSchema = z.object({
   clientResponseNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const invoiceFormSchema = z.object({
+export const invoiceFormSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 3, 180),
   description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
   billingType: z
@@ -561,7 +571,7 @@ export const invoiceFormSchema = z.object({
   clientVisible: booleanish.optional(),
 });
 
-export const paymentFormSchema = z.object({
+export const paymentFormSchema = strictObjectWithReturnTo({
   invoiceId: adminIdField,
   amount: z.coerce.number().positive().max(999999999),
   paymentDate: dateString,
@@ -574,7 +584,7 @@ export const paymentFormSchema = z.object({
     .refine((value) => !value || PAYMENT_METHODS.includes(value as (typeof PAYMENT_METHODS)[number]), 'Invalid payment method'),
 });
 
-export const portalDocumentFormSchema = z.object({
+export const portalDocumentFormSchema = strictObjectWithReturnTo({
   title: requiredText('Title', 3, 180),
   description: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
   type: z
@@ -608,7 +618,7 @@ export const portalDocumentFormSchema = z.object({
   clientResponseNote: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const supplierFormSchema = z.object({
+export const supplierFormSchema = strictObject({
   name: requiredText('Supplier name', 2, 180),
   contactPerson: optionalText(120),
   email: optionalEmailField(),
@@ -621,7 +631,7 @@ export const supplierFormSchema = z.object({
   status: z.enum(SUPPLIER_STATUSES).default('ACTIVE'),
 });
 
-export const materialItemFormSchema = z.object({
+export const materialItemFormSchema = strictObject({
   name: requiredText('Material name', 2, 180),
   code: optionalText(80),
   category: optionalText(80),
@@ -633,7 +643,7 @@ export const materialItemFormSchema = z.object({
   defaultSupplierId: relationIdField,
 });
 
-export const projectProcurementItemFormSchema = z.object({
+export const projectProcurementItemFormSchema = strictObjectWithReturnTo({
   deliveryProjectId: requiredIdField('Project'),
   materialItemId: relationIdField,
   preferredSupplierId: relationIdField,
@@ -648,7 +658,7 @@ export const projectProcurementItemFormSchema = z.object({
   notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
 });
 
-export const purchaseRequestFormSchema = z.object({
+export const purchaseRequestFormSchema = strictObjectWithReturnTo({
   deliveryProjectId: requiredIdField('Project'),
   supplierId: relationIdField,
   status: z.enum(PURCHASE_REQUEST_STATUSES).default('DRAFT'),
@@ -669,13 +679,15 @@ export const projectAssignmentFormSchema = z
     startDate: dateString,
     endDate: dateString,
     notes: z.string().optional().transform((value) => sanitizeOptionalText(value, 4000)),
+    returnTo: returnToField,
   })
+  .strict()
   .refine((value) => Boolean(value.adminUserId || value.externalName), {
     message: 'Provide an internal assignee or an external contact.',
     path: ['adminUserId'],
   });
 
-export const siteTaskFormSchema = z.object({
+export const siteTaskFormSchema = strictObjectWithReturnTo({
   deliveryProjectId: requiredIdField('Project'),
   projectMilestoneId: relationIdField,
   title: requiredText('Task title', 3, 180),
@@ -686,7 +698,7 @@ export const siteTaskFormSchema = z.object({
   assignedToAdminId: relationIdField,
 });
 
-export const siteLogFormSchema = z.object({
+export const siteLogFormSchema = strictObjectWithReturnTo({
   deliveryProjectId: requiredIdField('Project'),
   logDate: requiredDateString('Log date'),
   summary: requiredText('Summary', 5, 4000),

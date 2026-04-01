@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getApiData, getApiErrorMessage, readApiResponse } from '../../lib/api-client';
 import { BUDGET_RANGES, PROJECT_TYPES, SERVICE_TYPES } from '../../lib/constants';
 
 type QuoteFormState = {
@@ -87,17 +88,21 @@ export function QuoteForm() {
         }),
       });
 
-      const result = await response.json().catch(() => ({} as Record<string, string>));
+      const result = await readApiResponse<{
+        referenceCode?: string;
+        message?: string;
+      }>(response);
+      const data = getApiData(result);
       if (response.ok && result.success) {
         setStatus('success');
-        setReference(result.referenceCode || '');
-        setMessage(result.message || 'Your quotation request has been submitted.');
+        setReference(typeof data.referenceCode === 'string' ? data.referenceCode : '');
+        setMessage(typeof data.message === 'string' ? data.message : 'Your quotation request has been submitted.');
         setForm(initialState);
         return;
       }
 
       setStatus('error');
-      setMessage(result.error || 'Unable to submit quote request.');
+      setMessage(getApiErrorMessage(result, 'Unable to submit quote request.'));
     } catch {
       setStatus('error');
       setMessage('Network error. Please try again.');

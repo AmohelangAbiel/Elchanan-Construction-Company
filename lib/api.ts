@@ -4,22 +4,61 @@ import { extractRequestIp, hashIp } from './sanitize';
 type JsonResponseOptions = {
   requestId?: string;
   headers?: HeadersInit;
+  code?: string;
 };
 
 function withResponseHeaders(options?: JsonResponseOptions) {
   const headers = new Headers(options?.headers);
+  if (!headers.has('Cache-Control')) {
+    headers.set('Cache-Control', 'no-store');
+  }
+  if (!headers.has('X-Content-Type-Options')) {
+    headers.set('X-Content-Type-Options', 'nosniff');
+  }
   if (options?.requestId) {
     headers.set('x-request-id', options.requestId);
   }
   return headers;
 }
 
+function getDefaultErrorCode(status: number) {
+  switch (status) {
+    case 400:
+      return 'BAD_REQUEST';
+    case 401:
+      return 'UNAUTHORIZED';
+    case 403:
+      return 'FORBIDDEN';
+    case 404:
+      return 'NOT_FOUND';
+    case 409:
+      return 'CONFLICT';
+    case 413:
+      return 'PAYLOAD_TOO_LARGE';
+    case 422:
+      return 'VALIDATION_FAILED';
+    case 429:
+      return 'RATE_LIMITED';
+    case 503:
+      return 'SERVICE_UNAVAILABLE';
+    default:
+      return 'INTERNAL_SERVER_ERROR';
+  }
+}
+
 export function jsonError(message: string, status = 400, details?: unknown, options?: JsonResponseOptions) {
+  const code = options?.code || getDefaultErrorCode(status);
+
   return NextResponse.json(
     {
       success: false,
-      error: message,
-      ...(details ? { details } : {}),
+      error: {
+        message,
+        code,
+      },
+      message,
+      code,
+      ...(details !== undefined ? { details } : {}),
     },
     { status, headers: withResponseHeaders(options) },
   );
@@ -29,10 +68,20 @@ export function jsonSuccess<T extends Record<string, unknown>>(payload: T, statu
   return NextResponse.json(
     {
       success: true,
+      data: payload,
       ...payload,
     },
     { status, headers: withResponseHeaders(options) },
   );
+}
+
+export function getUnexpectedKeys(
+  payload: Record<string, unknown>,
+  allowedKeys: readonly string[],
+) {
+  const allowed = new Set(allowedKeys);
+
+  return Object.keys(payload).filter((key) => !allowed.has(key));
 }
 
 export function getRequesterMetadata(request: Request) {

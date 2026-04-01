@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState } from 'react';
+import { getApiData, getApiErrorMessage, readApiResponse } from '../../../lib/api-client';
 
 type UploadKind = 'project' | 'service' | 'quote' | 'general';
 
@@ -51,17 +52,21 @@ export function MediaUploadPanel() {
         body: formData,
       });
 
-      const result = await response.json().catch(() => ({} as Record<string, unknown>));
+      const result = await readApiResponse<{
+        asset?: UploadResult;
+        message?: string;
+      }>(response);
+      const data = getApiData(result);
 
       if (!response.ok || !result.success) {
         setStatus('error');
-        setMessage((result.error as string) || 'Upload failed. Please try again.');
+        setMessage(getApiErrorMessage(result, 'Upload failed. Please try again.'));
         return;
       }
 
       setStatus('success');
-      setMessage((result.message as string) || 'Upload completed.');
-      setUploadedAsset(result.asset as UploadResult);
+      setMessage(typeof data.message === 'string' ? data.message : 'Upload completed.');
+      setUploadedAsset((data.asset as UploadResult | undefined) || null);
       formElement.reset();
       setKind('project');
       setAltText('');

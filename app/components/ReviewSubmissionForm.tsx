@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getApiErrorMessage, readApiResponse } from '../../lib/api-client';
 
 const initialState = {
   name: '',
@@ -34,7 +35,7 @@ export function ReviewSubmissionForm() {
         }),
       });
 
-      const result = await response.json().catch(() => ({} as Record<string, string>));
+      const result = await readApiResponse(response);
       if (response.ok && result.success) {
         setStatus('success');
         setMessage('Your review has been received and is pending moderation.');
@@ -43,7 +44,7 @@ export function ReviewSubmissionForm() {
       }
 
       setStatus('error');
-      setMessage(result.error || 'Unable to submit your review.');
+      setMessage(getApiErrorMessage(result, 'Unable to submit your review.'));
     } catch {
       setStatus('error');
       setMessage('Network error. Please try again.');

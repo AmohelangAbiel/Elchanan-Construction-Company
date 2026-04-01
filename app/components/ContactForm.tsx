@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getApiData, getApiErrorMessage, readApiResponse } from '../../lib/api-client';
 
 const initialState = {
   fullName: '',
@@ -78,18 +79,22 @@ export function ContactForm() {
         }),
       });
 
-      const result = await response.json().catch(() => ({} as Record<string, string>));
+      const result = await readApiResponse<{
+        referenceCode?: string;
+        message?: string;
+      }>(response);
+      const data = getApiData(result);
 
       if (response.ok && result.success) {
         setStatus('success');
-        setReference(result.referenceCode || '');
-        setMessage(result.message || 'Your enquiry has been received successfully.');
+        setReference(typeof data.referenceCode === 'string' ? data.referenceCode : '');
+        setMessage(typeof data.message === 'string' ? data.message : 'Your enquiry has been received successfully.');
         setForm(initialState);
         return;
       }
 
       setStatus('error');
-      setMessage(result.error || 'Unable to send enquiry. Please try again.');
+      setMessage(getApiErrorMessage(result, 'Unable to send enquiry. Please try again.'));
     } catch {
       setStatus('error');
       setMessage('Network error. Please try again.');
