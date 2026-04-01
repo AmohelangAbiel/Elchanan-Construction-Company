@@ -1,0 +1,12 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Elchanan Construction mark">
+  <rect width="200" height="200" rx="24" fill="#F0F2F3"/>
+  <path d="M12 56L84 12V56H12Z" fill="#6A6D70"/>
+  <path d="M84 12L188 56H84V12Z" fill="#94979B"/>
+  <rect x="12" y="60" width="176" height="4" fill="white"/>
+  <path d="M12 64H84V188H12V160H54V132H12V104H54V84H12V64Z" fill="#0080C0"/>
+  <path d="M54 84V104H22L54 84Z" fill="#6A6D70"/>
+  <path d="M54 132V160H22L54 132Z" fill="#6A6D70"/>
+  <path d="M84 64H188V104H138V84H126V160H138V140H188V188H84V64Z" fill="#30B0E0"/>
+  <path d="M138 84H146L138 74V84Z" fill="#B7BABD"/>
+  <path d="M146 84L178 132H146V160H128V84H146Z" fill="#9EA2A6"/>
+</svg>

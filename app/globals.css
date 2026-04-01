@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --brand-primary: #0080c0;
+  --brand-secondary: #30b0e0;
+  --brand-cyan: #22d9ff;
+  --brand-graphite: #64676b;
+  --brand-slate: #93979c;
+  --brand-cloud: #f0f2f3;
+
+  --surface-base: #030b17;
+  --surface-panel: #101a2a;
+  --surface-soft: #1a2534;
+  --surface-glass: rgba(16, 26, 42, 0.74);
+
+  --text-strong: #f7fafc;
+  --text-muted: #9caec2;
+  --border-soft: rgba(148, 163, 184, 0.18);
+
+  --shadow-card: 0 18px 42px rgba(0, 0, 0, 0.34);
+  --shadow-glow: 0 24px 80px rgba(0, 128, 192, 0.18), 0 0 0 1px rgba(34, 217, 255, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--surface-base);
+  color: var(--text-strong);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: rgba(34, 217, 255, 0.35);
+  color: #ffffff;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(34, 217, 255, 0.7);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .surface-panel {
+    @apply border border-white/10 bg-slate-950/70 backdrop-blur-xl;
+  }
+
+  .surface-soft {
+    @apply border border-slate-800/70 bg-slate-900/70;
+  }
+
+  .card-premium {
+    @apply rounded-[2rem] border border-slate-800/80 bg-slate-950/70 shadow-glow transition;
+  }
+
+  .card-premium:hover {
+    @apply -translate-y-0.5 border-brand-cyan/50 bg-slate-900/90;
+  }
+
+  .interactive-card {
+    @apply rounded-[2rem] border border-slate-800/80 bg-slate-950/70 transition duration-200 ease-out;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(34, 217, 255, 0.08);
+  }
+
+  .interactive-card:focus-within {
+    @apply border-brand-cyan/60;
+    box-shadow: 0 0 0 2px rgba(34, 217, 255, 0.26), 0 16px 42px rgba(0, 0, 0, 0.34);
+  }
+
+  .contact-action-card {
+    @apply relative overflow-hidden rounded-2xl border border-slate-800/75 bg-slate-900/70 p-4 transition duration-200 ease-out;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .contact-action-card:focus-within {
+    @apply border-brand-cyan/55;
+    box-shadow: 0 0 0 2px rgba(34, 217, 255, 0.22), 0 14px 36px rgba(0, 0, 0, 0.3);
+  }
+
+  .contact-action-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: linear-gradient(130deg, rgba(34, 217, 255, 0.14), transparent 60%);
+    transition: opacity 240ms ease;
+    pointer-events: none;
+  }
+
+  .icon-pill {
+    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan transition duration-200;
+  }
+
+  .icon-pill-lg {
+    @apply inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-brand-cyan/45 bg-brand-cyan/10 text-brand-cyan transition duration-200;
+  }
+
+  .interactive-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition duration-200 ease-out;
+  }
+
+  .interactive-input {
+    @apply w-full rounded-3xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 outline-none transition duration-200;
+  }
+
+  .interactive-input:focus {
+    @apply border-brand-cyan/80;
+    box-shadow: 0 0 0 2px rgba(34, 217, 255, 0.22), inset 0 0 0 1px rgba(34, 217, 255, 0.22);
+  }
+
+  .btn-primary {
+    @apply interactive-button bg-brand-blue text-white hover:bg-brand-sky;
+  }
+
+  .btn-accent {
+    @apply interactive-button bg-brand-cyan text-slate-950 hover:bg-brand-sky;
+  }
+
+  .btn-ghost {
+    @apply interactive-button border border-white/15 bg-white/5 text-white hover:border-brand-cyan/50 hover:text-brand-cyan;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply border border-white/10 bg-slate-950/70 backdrop-blur-xl;
+  }
+
+  .neon-edge {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive-card:hover {
+    @apply -translate-y-0.5 border-brand-cyan/45 bg-slate-900/90;
+    box-shadow: 0 18px 46px rgba(0, 128, 192, 0.18), 0 0 0 1px rgba(34, 217, 255, 0.18);
+  }
+
+  .contact-action-card:hover {
+    @apply -translate-y-0.5 border-brand-cyan/45 bg-slate-900/85;
+    box-shadow: 0 18px 40px rgba(0, 128, 192, 0.16), 0 0 0 1px rgba(34, 217, 255, 0.12);
+  }
+
+  .contact-action-card:hover::before {
+    opacity: 1;
+  }
+
+  .interactive-button:hover {
+    @apply -translate-y-0.5;
+  }
+
+  .interactive-input:hover {
+    @apply border-brand-sky/45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .interactive-card:hover,
+  .contact-action-card:hover,
+  .interactive-button:hover {
+    transform: none !important;
+  }
+}

@@ -1,0 +1,22 @@
+<svg width="360" height="420" viewBox="0 0 360 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Elchanan Construction logo">
+  <rect width="360" height="420" rx="20" fill="#F0F2F3"/>
+
+  <path d="M20 95L150 20H150V95H20Z" fill="#6A6D70"/>
+  <path d="M150 20L340 20L340 20L340 20L340 95H150V20Z" fill="#94979B"/>
+  <path d="M150 20L340 95H150V20Z" fill="#94979B"/>
+
+  <rect x="20" y="102" width="320" height="7" fill="white"/>
+
+  <path d="M20 110H150V330H20V280H95V235H20V185H95V145H20V110Z" fill="#0080C0"/>
+  <path d="M95 145V185H35L95 145Z" fill="#6A6D70"/>
+  <path d="M95 235V280H35L95 235Z" fill="#6A6D70"/>
+
+  <path d="M150 110H340V180H245V145H225V280H245V245H340V330H150V110Z" fill="#30B0E0"/>
+  <path d="M245 145H260L245 126V145Z" fill="#B7BABD"/>
+  <path d="M260 145L322 236H260V280H230V145H260Z" fill="#9EA2A6"/>
+
+  <text x="180" y="372" text-anchor="middle" font-family="Space Grotesk, Arial, sans-serif" font-size="56" font-weight="700" fill="#666A6E" letter-spacing="3">ELCHANAN</text>
+  <line x1="20" y1="404" x2="78" y2="404" stroke="#666A6E" stroke-width="3"/>
+  <line x1="282" y1="404" x2="340" y2="404" stroke="#666A6E" stroke-width="3"/>
+  <text x="180" y="412" text-anchor="middle" font-family="Space Grotesk, Arial, sans-serif" font-size="32" font-weight="700" fill="#0080C0" letter-spacing="8">CONSTRUCTION</text>
+</svg>

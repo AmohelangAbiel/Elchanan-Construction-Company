@@ -1,0 +1,9 @@
+<svg viewBox="0 0 720 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Renovation project illustration">
+  <rect width="720" height="480" fill="#07101A"/>
+  <path d="M120 340H600V420H120z" fill="#0B2447"/>
+  <path d="M160 240H560V340H160z" fill="#0F7ACB"/>
+  <path d="M420 180H520V240H420z" fill="#5DC2F2"/>
+  <rect x="240" y="200" width="140" height="100" fill="#1E293B" rx="16"/>
+  <path d="M240 200L320 120L420 200" fill="none" stroke="#22D9FF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="600" cy="120" r="42" fill="#22D9FF" opacity="0.18"/>
+</svg>

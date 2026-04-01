@@ -1,0 +1,10 @@
+<svg viewBox="0 0 720 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Paving and brickwork illustration">
+  <rect width="720" height="480" fill="#09101A"/>
+  <path d="M100 320H620V420H100z" fill="#0F7ACB"/>
+  <path d="M140 240H580V320H140z" fill="#5DC2F2"/>
+  <path d="M240 180H340V240H240z" fill="#22D9FF"/>
+  <path d="M420 200H520V240H420z" fill="#0F7ACB"/>
+  <path d="M120 360H320" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round"/>
+  <path d="M420 360H620" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="580" cy="110" r="45" fill="#22D9FF" opacity="0.14"/>
+</svg>

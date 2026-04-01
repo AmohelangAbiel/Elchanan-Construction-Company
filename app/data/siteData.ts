@@ -1,0 +1,31 @@
+export const siteMeta = {
+  name: 'Elchanan Construction Company',
+  tagline: 'Rustenburg modern construction partner for residential, renovation, and infrastructure projects.',
+  description:
+    'Elchanan Construction Company delivers premium build, renovation, and infrastructure services across Rustenburg and the North West province with trusted project planning and transparent quoting.',
+  phone: '074 751 2226',
+  address: 'Rustenburg, North West Province, South Africa',
+  email: 'hello@elchananconstruction.co.za',
+  hours: [
+    { day: 'Mon', hours: '09:00 - 17:00' },
+    { day: 'Tue', hours: '09:00 - 17:00' },
+    { day: 'Wed', hours: '09:00 - 17:00' },
+    { day: 'Thu', hours: '09:00 - 17:00' },
+    { day: 'Fri', hours: '09:00 - 17:00' },
+    { day: 'Sat', hours: '09:00 - 13:00' },
+    { day: 'Sun', hours: 'Closed' },
+  ],
+  nav: [
+    { title: 'Home', href: '/' },
+    { title: 'About', href: '/about' },
+    { title: 'Services', href: '/services' },
+    { title: 'Projects', href: '/projects' },
+    { title: 'Solutions', href: '/solutions' },
+    { title: 'Pricing', href: '/pricing' },
+    { title: 'Quote', href: '/quote' },
+    { title: 'Reviews', href: '/reviews' },
+    { title: 'Contact', href: '/contact' },
+    { title: 'Forum', href: '/forum' },
+    { title: 'FAQ', href: '/faq' },
+  ],
+};

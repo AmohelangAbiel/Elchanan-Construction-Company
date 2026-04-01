@@ -1,0 +1,1 @@
+ALTER TABLE "ForumThread" ALTER COLUMN "status" SET DEFAULT 'PENDING';
