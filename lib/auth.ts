@@ -23,14 +23,59 @@ export type AdminSession = {
 
 const ADMIN_TOKEN_MAX_AGE = 8 * 60 * 60;
 
-function getAdminSecret() {
-  const secret = process.env.ADMIN_SECRET;
+function readAdminSecret() {
+  return typeof process.env.ADMIN_SECRET === 'string' ? process.env.ADMIN_SECRET.trim() : '';
+}
 
-  if (!secret || secret === 'replace-with-a-strong-secret') {
-    throw new Error('ADMIN_SECRET must be set to a strong value before using admin authentication.');
+function getAdminSecretIssue() {
+  const secret = readAdminSecret();
+
+  if (!secret || secret.toLowerCase().includes('replace-with')) {
+    return 'ADMIN_SECRET is missing. Set a strong random value before using admin authentication.';
   }
 
-  return secret;
+  if (process.env.NODE_ENV === 'production' && secret.length < 24) {
+    return 'ADMIN_SECRET is missing or too weak. Set a strong random value with at least 24 characters.';
+  }
+
+  return null;
+}
+
+function getIpHashSaltIssue() {
+  const salt = typeof process.env.IP_HASH_SALT === 'string' ? process.env.IP_HASH_SALT.trim() : '';
+
+  if (!salt || salt.toLowerCase().includes('replace-with') || salt.length < 16) {
+    return 'IP_HASH_SALT is missing or too weak. Set a strong random value in Render for production request hashing.';
+  }
+
+  return null;
+}
+
+export function getAdminAuthConfigurationIssues() {
+  const issues: string[] = [];
+  const secretIssue = getAdminSecretIssue();
+
+  if (secretIssue) {
+    issues.push(secretIssue);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const ipHashSaltIssue = getIpHashSaltIssue();
+    if (ipHashSaltIssue) {
+      issues.push(ipHashSaltIssue);
+    }
+  }
+
+  return issues;
+}
+
+function getAdminSecret() {
+  const issue = getAdminSecretIssue();
+  if (issue) {
+    throw new Error(issue);
+  }
+
+  return readAdminSecret();
 }
 
 export function hashPassword(password: string) {
