@@ -24,14 +24,59 @@ export type PortalSession = {
 
 const PORTAL_TOKEN_MAX_AGE = 8 * 60 * 60;
 
-function getPortalSecret() {
-  const secret = process.env.PORTAL_SECRET;
+function readPortalSecret() {
+  return typeof process.env.PORTAL_SECRET === 'string' ? process.env.PORTAL_SECRET.trim() : '';
+}
 
-  if (!secret || secret === 'replace-with-a-strong-secret') {
-    throw new Error('PORTAL_SECRET must be set to a strong value before using portal authentication.');
+function getPortalSecretIssue() {
+  const secret = readPortalSecret();
+
+  if (!secret || secret.toLowerCase().includes('replace-with')) {
+    return 'PORTAL_SECRET is missing. Set a strong random value before using portal authentication.';
   }
 
-  return secret;
+  if (process.env.NODE_ENV === 'production' && secret.length < 24) {
+    return 'PORTAL_SECRET is missing or too weak. Set a strong random value with at least 24 characters.';
+  }
+
+  return null;
+}
+
+function getIpHashSaltIssue() {
+  const salt = typeof process.env.IP_HASH_SALT === 'string' ? process.env.IP_HASH_SALT.trim() : '';
+
+  if (!salt || salt.toLowerCase().includes('replace-with') || salt.length < 16) {
+    return 'IP_HASH_SALT is missing or too weak. Set a strong random value in Render for production request hashing.';
+  }
+
+  return null;
+}
+
+export function getPortalAuthConfigurationIssues() {
+  const issues: string[] = [];
+  const secretIssue = getPortalSecretIssue();
+
+  if (secretIssue) {
+    issues.push(secretIssue);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const ipHashSaltIssue = getIpHashSaltIssue();
+    if (ipHashSaltIssue) {
+      issues.push(ipHashSaltIssue);
+    }
+  }
+
+  return issues;
+}
+
+function getPortalSecret() {
+  const issue = getPortalSecretIssue();
+  if (issue) {
+    throw new Error(issue);
+  }
+
+  return readPortalSecret();
 }
 
 export function hashPortalPassword(password: string) {
